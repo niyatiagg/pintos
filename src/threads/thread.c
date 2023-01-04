@@ -270,7 +270,7 @@ thread_sleep (int64_t ticks)
 {
     thread_current ()->sleep_ticks = ticks;
     thread_block();
-    list_push_back(&sleep_list, thread_current ()->elem);
+    list_push_back(&sleep_list, &thread_current ()->elem);
 
 }
 /* Returns the name of the running thread. */
