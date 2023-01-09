@@ -24,6 +24,9 @@
    that are ready to run but not actually running. */
 static struct list ready_list;
 
+/* List of processes in sleep state */
+static struct list sleep_list;
+
 /* List of all processes.  Processes are added to this list
    when they are first scheduled and removed when they exit. */
 static struct list all_list;
@@ -91,6 +94,7 @@ thread_init (void)
 
   lock_init (&tid_lock);
   list_init (&ready_list);
+  list_init (&sleep_list);
   list_init (&all_list);
 
   /* Set up a thread structure for the running thread. */
@@ -137,6 +141,22 @@ thread_tick (void)
   /* Enforce preemption. */
   if (++thread_ticks >= TIME_SLICE)
     intr_yield_on_return ();
+
+  struct list_elem *e;
+  e = list_begin (&sleep_list);
+  while ( e != list_end (&sleep_list))
+    {
+        struct thread *th = list_entry (e, struct thread, elem);
+        if (th->sleep_ticks == 1) {
+            struct list_elem *tmp = e;
+            e = list_next(e);
+            list_remove(tmp);
+            thread_unblock(th);
+        } else {
+            th->sleep_ticks--;
+            e = list_next(e);
+        }
+    }
 }
 
 /* Prints thread statistics. */
@@ -240,6 +260,16 @@ thread_unblock (struct thread *t)
   list_push_back (&ready_list, &t->elem);
   t->status = THREAD_READY;
   intr_set_level (old_level);
+}
+
+void
+thread_sleep (int64_t ticks)
+{
+    ASSERT (!intr_context ());
+    ASSERT (intr_get_level () == INTR_OFF);
+    thread_current ()->sleep_ticks = ticks;
+    list_push_back(&sleep_list, &thread_current ()->elem);
+    thread_block();
 }
 
 /* Returns the name of the running thread. */
