@@ -147,7 +147,8 @@ thread_tick (void)
     {
         struct thread *th = list_entry (e, struct thread, elem);
         if (t->sleep_ticks == 0)
-            struct list_elem *tmp = e->prev;
+            struct list_elem *tmp;
+            &tmp = e->prev;
             list_remove (&e);
             thread_unblock (th);
             &e = &tmp;
