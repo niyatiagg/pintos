@@ -142,15 +142,20 @@ thread_tick (void)
     intr_yield_on_return ();
 
   struct list_elem *e;
-  for (e = list_begin (&sleep_list); e != list_end (&sleep_list);
-         e = list_next (e))
+  e = list_begin (&sleep_list);
+  while ( e != list_end (&sleep_list))
     {
-        struct thread *t = list_entry (e, struct thread, elem);
+        struct thread *th = list_entry (e, struct thread, elem);
         if (t->sleep_ticks == 0)
-            thread_unblock (t);
+            struct list_elem *tmp = e->prev;
+            list_remove (&e);
+            thread_unblock (th);
+            &e = &tmp;
 
         else
             t->sleep_ticks--;
+
+        e = list_next (e);
     }
 }
 
@@ -261,8 +266,12 @@ void
 thread_sleep (int64_t ticks)
 {
     thread_current ()->sleep_ticks = ticks;
+    enum intr_level old_level;
+    old_level = intr_disable ();
     thread_block();
     list_push_back(&sleep_list, &thread_current ()->elem);
+
+    old_level = intr_enable ();
 
 }
 /* Returns the name of the running thread. */
