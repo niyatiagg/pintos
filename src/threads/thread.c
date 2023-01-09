@@ -146,15 +146,14 @@ thread_tick (void)
   while ( e != list_end (&sleep_list))
     {
         struct thread *th = list_entry (e, struct thread, elem);
-        if (t->sleep_ticks == 0)
+        if (t->sleep_ticks == 0) {
             struct list_elem *tmp;
             &tmp = e->prev;
-            list_remove (&e);
-            thread_unblock (th);
+            list_remove(&e);
+            thread_unblock(th);
             &e = &tmp;
-
-        else
-            t->sleep_ticks--;
+        } else
+            th->sleep_ticks--;
 
         e = list_next (e);
     }
