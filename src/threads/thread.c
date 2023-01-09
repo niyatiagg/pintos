@@ -147,15 +147,14 @@ thread_tick (void)
     {
         struct thread *th = list_entry (e, struct thread, elem);
         if (th->sleep_ticks == 0) {
-            struct list_elem *tmp;
-            tmp = e->prev;
-            list_remove(e);
+            struct list_elem *tmp = e;
+            e = list_next(e);
+            list_remove(tmp);
             thread_unblock(th);
-            e = tmp;
-        } else
+        } else {
             th->sleep_ticks--;
-
-        e = list_next (e);
+            e = list_next(e);
+        }
     }
 }
 
@@ -265,10 +264,10 @@ thread_unblock (struct thread *t)
 void
 thread_sleep (int64_t ticks)
 {
-    thread_current ()->sleep_ticks = ticks;
     ASSERT (!intr_context ());
     ASSERT (intr_get_level () == INTR_OFF);
 
+    thread_current ()->sleep_ticks = ticks;
     list_push_back(&sleep_list, &thread_current ()->elem);
     thread_block();
 }
