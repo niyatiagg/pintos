@@ -147,7 +147,7 @@ thread_tick (void)
   while ( e != list_end (&sleep_list))
     {
         struct thread *th = list_entry (e, struct thread, elem);
-        if (th->sleep_ticks == 0) {
+        if (th->sleep_ticks == 1) {
             struct list_elem *tmp = e;
             e = list_next(e);
             list_remove(tmp);
@@ -267,7 +267,6 @@ thread_sleep (int64_t ticks)
 {
     ASSERT (!intr_context ());
     ASSERT (intr_get_level () == INTR_OFF);
-
     thread_current ()->sleep_ticks = ticks;
     list_push_back(&sleep_list, &thread_current ()->elem);
     thread_block();
