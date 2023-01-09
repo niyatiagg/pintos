@@ -266,11 +266,11 @@ void
 thread_sleep (int64_t ticks)
 {
     thread_current ()->sleep_ticks = ticks;
-    enum intr_level old_level;
-    old_level = intr_disable ();
-    thread_block();
+    ASSERT (!intr_context ());
+    ASSERT (intr_get_level () == INTR_OFF);
+
     list_push_back(&sleep_list, &thread_current ()->elem);
-    intr_set_level (old_level);
+    thread_block();
 }
 
 /* Returns the name of the running thread. */
