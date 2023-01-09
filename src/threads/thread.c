@@ -146,12 +146,12 @@ thread_tick (void)
   while ( e != list_end (&sleep_list))
     {
         struct thread *th = list_entry (e, struct thread, elem);
-        if (t->sleep_ticks == 0) {
+        if (th->sleep_ticks == 0) {
             struct list_elem *tmp;
-            &tmp = e->prev;
-            list_remove(&e);
+            tmp = e->prev;
+            list_remove(e);
             thread_unblock(th);
-            &e = &tmp;
+            e = tmp;
         } else
             th->sleep_ticks--;
 
@@ -270,10 +270,9 @@ thread_sleep (int64_t ticks)
     old_level = intr_disable ();
     thread_block();
     list_push_back(&sleep_list, &thread_current ()->elem);
-
-    old_level = intr_enable ();
-
+    intr_set_level (old_level);
 }
+
 /* Returns the name of the running thread. */
 const char *
 thread_name (void) 
