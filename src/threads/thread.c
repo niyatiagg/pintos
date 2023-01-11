@@ -257,7 +257,14 @@ thread_unblock (struct thread *t)
 
   old_level = intr_disable ();
   ASSERT (t->status == THREAD_BLOCKED);
-  list_push_back (&ready_list, &t->elem);
+  // add the unblocked thread to the queue with its priority
+
+  list_insert_ordered (&ready_list, &t->elem, priority_compare, NULL);
+
+  struct thread *cur = thread_current ();
+  if(t->priority > cur->priority) {
+      thread_yield ();
+  }
   t->status = THREAD_READY;
   intr_set_level (old_level);
 }
@@ -337,8 +344,8 @@ thread_yield (void)
   ASSERT (!intr_context ());
 
   old_level = intr_disable ();
-  if (cur != idle_thread) 
-    list_push_back (&ready_list, &cur->elem);
+  if (cur != idle_thread)
+      list_insert_ordered (&ready_list, &cur->elem, priority_compare, NULL);
   cur->status = THREAD_READY;
   schedule ();
   intr_set_level (old_level);
@@ -523,7 +530,9 @@ next_thread_to_run (void)
   if (list_empty (&ready_list))
     return idle_thread;
   else
+      // for(
     return list_entry (list_pop_front (&ready_list), struct thread, elem);
+  // make a priority list whose first element is the thread with highest priority
 }
 
 /* Completes a thread switch by activating the new thread's page
@@ -612,3 +621,14 @@ allocate_tid (void)
 /* Offset of `stack' member within `struct thread'.
    Used by switch.S, which can't figure it out on its own. */
 uint32_t thread_stack_ofs = offsetof (struct thread, stack);
+
+//checks the priority of two elements of ready_list
+static bool
+priority_compare (const struct list_elem *a_, const struct list_elem *b_,
+            void *aux UNUSED)
+{
+    const struct thread *t1 = list_entry (a_, struct thread, elem);
+    const struct thread *t2 = list_entry (b_, struct thread, elem);
+
+    return t1->priority > t2->priority;
+}
