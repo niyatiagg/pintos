@@ -66,7 +66,7 @@ static void kernel_thread (thread_func *, void *aux);
 
 static void idle (void *aux UNUSED);
 static struct thread *running_thread (void);
-static struct thread *next_thread_to_run (void);
+static struct thread *next_thread_to_run (bool pop);
 static void init_thread (struct thread *, const char *name, int priority);
 static bool is_thread (struct thread *) UNUSED;
 static void *alloc_frame (struct thread *, size_t size);
@@ -258,15 +258,14 @@ thread_unblock (struct thread *t)
 
   old_level = intr_disable ();
   ASSERT (t->status == THREAD_BLOCKED);
-  // add the unblocked thread to the queue with its priority
 
   list_insert_ordered (&ready_list, &t->elem, priority_compare, NULL);
-
-  struct thread *cur = thread_current ();
-  if(t->priority > cur->priority) {
+  t->status = THREAD_READY;
+  /*int cur_priority = thread_get_priority ();
+  if(t->priority > cur_priority) {
       thread_yield ();
   }
-  t->status = THREAD_READY;
+   */
   intr_set_level (old_level);
 }
 
@@ -526,13 +525,14 @@ alloc_frame (struct thread *t, size_t size)
    will be in the run queue.)  If the run queue is empty, return
    idle_thread. */
 static struct thread *
-next_thread_to_run (void) 
+next_thread_to_run (bool pop)
 {
   if (list_empty (&ready_list))
     return idle_thread;
+  else if (!pop)
+    return list_entry (list_front (&ready_list), struct thread, elem);
   else
-      // for(
-    return list_entry (list_pop_front (&ready_list), struct thread, elem);
+      return list_entry (list_pop_front (&ready_list), struct thread, elem);
   // make a priority list whose first element is the thread with highest priority
 }
 
@@ -593,15 +593,17 @@ static void
 schedule (void) 
 {
   struct thread *cur = running_thread ();
-  struct thread *next = next_thread_to_run ();
+  struct thread *next = next_thread_to_run (false);
   struct thread *prev = NULL;
 
   ASSERT (intr_get_level () == INTR_OFF);
   ASSERT (cur->status != THREAD_RUNNING);
   ASSERT (is_thread (next));
 
-  if (cur != next)
-    prev = switch_threads (cur, next);
+  if( cur != next && cur->priority < next->priority) {
+      next = next_thread_to_run (true);
+      prev = switch_threads (cur, next);
+  }
   thread_schedule_tail (prev);
 }
 
