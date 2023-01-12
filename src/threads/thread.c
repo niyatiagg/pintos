@@ -40,9 +40,6 @@ static struct thread *initial_thread;
 /* Lock used by allocate_tid(). */
 static struct lock tid_lock;
 
-/* Lock used by list insertion and deletion. */
-static struct lock rll_lock;
-
 /* Stack frame for kernel_thread(). */
 struct kernel_thread_frame 
   {
@@ -97,7 +94,6 @@ thread_init (void)
   ASSERT (intr_get_level () == INTR_OFF);
 
   lock_init (&tid_lock);
-  lock_init (&rll_lock);
   list_init (&ready_list);
   list_init (&sleep_list);
   list_init (&all_list);
@@ -157,6 +153,8 @@ thread_tick (void)
             e = list_next(e);
             list_remove(tmp);
             thread_unblock(th);
+            if (thread_current ()->priority < th->priority)
+              intr_yield_on_return ();
         } else {
             th->sleep_ticks--;
             e = list_next(e);
@@ -262,12 +260,8 @@ thread_unblock (struct thread *t)
 
   old_level = intr_disable ();
   ASSERT (t->status == THREAD_BLOCKED);
-  lock_acquire (&rll_lock);
   list_insert_ordered (&ready_list, &t->elem, priority_compare, NULL);
-  lock_release (&rll_lock);
   t->status = THREAD_READY;
-  if (thread_current ()->priority < t->priority)
-      thread_yield();
   intr_set_level (old_level);
 }
 
@@ -302,7 +296,6 @@ thread_current (void)
      of stack, so a few big automatic arrays or moderate
      recursion can cause stack overflow. */
   ASSERT (is_thread (t));
-  ASSERT (t->status == THREAD_RUNNING || t->status == THREAD_BLOCKED);
 
   return t;
 }
@@ -346,11 +339,8 @@ thread_yield (void)
   ASSERT (!intr_context ());
 
   old_level = intr_disable ();
-  if (cur != idle_thread) {
-      lock_acquire(&rll_lock);
-      list_insert_ordered(&ready_list, &cur->elem, priority_compare, NULL);
-      lock_release(&rll_lock);
-  }
+  if (cur != idle_thread)
+    list_insert_ordered(&ready_list, &cur->elem, priority_compare, NULL);
 
   cur->status = THREAD_READY;
   schedule ();
@@ -540,10 +530,7 @@ next_thread_to_run (void)
   if (list_empty (&ready_list))
     return idle_thread;
   else
-    lock_acquire (&rll_lock);
-    struct thread *t = list_entry (list_pop_front (&ready_list), struct thread, elem);
-    lock_release (&rll_lock);
-    return t;
+    return list_entry (list_pop_front (&ready_list), struct thread, elem);;
 }
 
 /* Completes a thread switch by activating the new thread's page
