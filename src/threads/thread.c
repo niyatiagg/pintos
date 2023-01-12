@@ -266,6 +266,8 @@ thread_unblock (struct thread *t)
   list_insert_ordered (&ready_list, &t->elem, priority_compare, NULL);
   lock_release (&rll_lock);
   t->status = THREAD_READY;
+  if (thread_current ()->priority < t->priority)
+      thread_yield();
   intr_set_level (old_level);
 }
 
@@ -300,7 +302,7 @@ thread_current (void)
      of stack, so a few big automatic arrays or moderate
      recursion can cause stack overflow. */
   ASSERT (is_thread (t));
-  ASSERT (t->status == THREAD_RUNNING);
+  ASSERT (t->status == THREAD_RUNNING || t->status == THREAD_BLOCKED);
 
   return t;
 }
