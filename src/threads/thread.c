@@ -40,6 +40,9 @@ static struct thread *initial_thread;
 /* Lock used by allocate_tid(). */
 static struct lock tid_lock;
 
+/* Lock used by list insertion and deletion. */
+static struct lock rll_lock;
+
 /* Stack frame for kernel_thread(). */
 struct kernel_thread_frame 
   {
@@ -94,6 +97,7 @@ thread_init (void)
   ASSERT (intr_get_level () == INTR_OFF);
 
   lock_init (&tid_lock);
+  lock_init (&rll_lock);
   list_init (&ready_list);
   list_init (&sleep_list);
   list_init (&all_list);
@@ -258,8 +262,9 @@ thread_unblock (struct thread *t)
 
   old_level = intr_disable ();
   ASSERT (t->status == THREAD_BLOCKED);
-
+  lock_acquire (&rll_lock);
   list_insert_ordered (&ready_list, &t->elem, priority_compare, NULL);
+  lock_release (&rll_lock);
   t->status = THREAD_READY;
   intr_set_level (old_level);
 }
@@ -340,7 +345,10 @@ thread_yield (void)
 
   old_level = intr_disable ();
   if (cur != idle_thread)
-      list_insert_ordered (&ready_list, &cur->elem, priority_compare, NULL);
+    lock_acquire (&rll_lock);
+    list_insert_ordered (&ready_list, &cur->elem, priority_compare, NULL);
+    lock_release (&rll_lock);
+
   cur->status = THREAD_READY;
   schedule ();
   intr_set_level (old_level);
@@ -525,7 +533,10 @@ next_thread_to_run (void)
   if (list_empty (&ready_list))
     return idle_thread;
   else
-    return list_entry (list_pop_front (&ready_list), struct thread, elem);
+    lock_acquire (&rll_lock);
+    struct thread *t = list_entry (list_pop_front (&ready_list), struct thread, elem);
+    lock_release (&rll_lock);
+    return t;
 }
 
 /* Completes a thread switch by activating the new thread's page
