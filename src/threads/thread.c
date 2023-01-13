@@ -153,8 +153,6 @@ thread_tick (void)
             e = list_next(e);
             list_remove(tmp);
             thread_unblock(th);
-            if (thread_current ()->priority < th->priority)
-              intr_yield_on_return ();
         } else {
             th->sleep_ticks--;
             e = list_next(e);
@@ -263,6 +261,13 @@ thread_unblock (struct thread *t)
   list_insert_ordered (&ready_list, &t->elem, priority_compare, NULL);
   t->status = THREAD_READY;
   intr_set_level (old_level);
+
+  if (thread_current ()->priority < t->priority) {
+    if (intr_context ())
+      intr_yield_on_return ();
+    else
+      thread_yield();
+  }
 }
 
 void
