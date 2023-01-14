@@ -93,6 +93,7 @@ struct thread
     /* Shared between thread.c and synch.c. */
     struct list_elem elem;              /* List element. */
     int64_t sleep_ticks;                /* sleep time */
+    int64_t wakeup_time;                /* absolute time since booting of OS */
 
 #ifdef USERPROG
     /* Owned by userprog/process.c. */

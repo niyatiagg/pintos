@@ -73,7 +73,8 @@ static void *alloc_frame (struct thread *, size_t size);
 static void schedule (void);
 void thread_schedule_tail (struct thread *prev);
 static tid_t allocate_tid (void);
-static bool priority_compare (const struct list_elem *a_, const struct list_elem *b_, void *aux UNUSED);
+static bool priority_compare (const struct list_elem *, const struct list_elem *, void *aux UNUSED);
+static bool priority_compare3 (const struct list_elem *, const struct list_elem *, void *aux UNUSED);
 
 /* Initializes the threading system by transforming the code
    that's currently running into a thread.  This can't work in
@@ -147,15 +148,16 @@ thread_tick (void)
   e = list_begin (&sleep_list);
   while ( e != list_end (&sleep_list))
     {
+        int64_t total_time = timer_ticks ();
         struct thread *th = list_entry (e, struct thread, elem);
-        if (th->sleep_ticks == 1) {
+        if (th->wakeup_time <= total_time) {
             struct list_elem *tmp = e;
             e = list_next(e);
             list_remove(tmp);
             thread_unblock(th);
+            e = list_next (e);
         } else {
-            th->sleep_ticks--;
-            e = list_next(e);
+            break;
         }
     }
 }
@@ -275,8 +277,8 @@ thread_sleep (int64_t ticks)
 {
     ASSERT (!intr_context ());
     ASSERT (intr_get_level () == INTR_OFF);
-    thread_current ()->sleep_ticks = ticks;
-    list_push_back(&sleep_list, &thread_current ()->elem);
+    thread_current ()->wakeup_time = ticks;
+    list_insert_ordered (&sleep_list, &thread_current ()->elem, priority_compare3, NULL);
     thread_block();
 }
 
@@ -634,4 +636,14 @@ priority_compare (const struct list_elem *a_, const struct list_elem *b_,
     const struct thread *t2 = list_entry (b_, struct thread, elem);
 
     return t1->priority > t2->priority;
+}
+
+static bool
+priority_compare3 (const struct list_elem *a_, const struct list_elem *b_,
+                  void *aux UNUSED)
+{
+    const struct thread *t1 = list_entry (a_, struct thread, elem);
+    const struct thread *t2 = list_entry (b_, struct thread, elem);
+
+    return t1->wakeup_time > t2->wakeup_time;
 }
