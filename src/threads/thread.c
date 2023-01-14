@@ -40,6 +40,8 @@ static struct thread *initial_thread;
 /* Lock used by allocate_tid(). */
 static struct lock tid_lock;
 
+static struct lock sleep_lock;
+
 /* Stack frame for kernel_thread(). */
 struct kernel_thread_frame 
   {
@@ -73,8 +75,8 @@ static void *alloc_frame (struct thread *, size_t size);
 static void schedule (void);
 void thread_schedule_tail (struct thread *prev);
 static tid_t allocate_tid (void);
-static bool priority_compare (const struct list_elem *, const struct list_elem *, void *aux UNUSED);
-static bool priority_compare3 (const struct list_elem *, const struct list_elem *, void *aux UNUSED);
+static bool priority_compare (const struct list_elem *a_, const struct list_elem *b_, void *aux UNUSED);
+static bool priority_compare3 (const struct list_elem *a_, const struct list_elem *b_, void *aux UNUSED);
 
 /* Initializes the threading system by transforming the code
    that's currently running into a thread.  This can't work in
@@ -95,6 +97,7 @@ thread_init (void)
   ASSERT (intr_get_level () == INTR_OFF);
 
   lock_init (&tid_lock);
+  lock_init (&sleep_lock);
   list_init (&ready_list);
   list_init (&sleep_list);
   list_init (&all_list);
@@ -277,7 +280,9 @@ thread_sleep (int64_t ticks)
     ASSERT (!intr_context ());
     ASSERT (intr_get_level () == INTR_OFF);
     thread_current ()->wakeup_time = ticks;
+    lock_acquire (&sleep_lock);
     list_insert_ordered (&sleep_list, &thread_current ()->elem, priority_compare3, NULL);
+    lock_release (&sleep_lock);
     thread_block();
 }
 
