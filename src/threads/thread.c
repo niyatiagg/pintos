@@ -155,7 +155,6 @@ thread_tick (void)
             e = list_next(e);
             list_remove(tmp);
             thread_unblock(th);
-            e = list_next (e);
         } else {
             break;
         }
