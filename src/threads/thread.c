@@ -76,7 +76,7 @@ static void schedule (void);
 void thread_schedule_tail (struct thread *prev);
 static tid_t allocate_tid (void);
 static bool priority_compare (const struct list_elem *a_, const struct list_elem *b_, void *aux UNUSED);
-static bool priority_compare3 (const struct list_elem *a_, const struct list_elem *b_, void *aux UNUSED);
+static bool wakeup_compare (const struct list_elem *a_, const struct list_elem *b_, void *aux UNUSED);
 
 /* Initializes the threading system by transforming the code
    that's currently running into a thread.  This can't work in
@@ -281,7 +281,7 @@ thread_sleep (int64_t ticks)
     ASSERT (intr_get_level () == INTR_OFF);
     thread_current ()->wakeup_time = ticks;
     lock_acquire (&sleep_lock);
-    list_insert_ordered (&sleep_list, &thread_current ()->elem, priority_compare3, NULL);
+    list_insert_ordered (&sleep_list, &thread_current ()->elem, wakeup_compare, NULL);
     lock_release (&sleep_lock);
     thread_block();
 }
@@ -643,11 +643,11 @@ priority_compare (const struct list_elem *a_, const struct list_elem *b_,
 }
 
 static bool
-priority_compare3 (const struct list_elem *a_, const struct list_elem *b_,
+wakeup_compare (const struct list_elem *a_, const struct list_elem *b_,
                   void *aux UNUSED)
 {
     const struct thread *t1 = list_entry (a_, struct thread, elem);
     const struct thread *t2 = list_entry (b_, struct thread, elem);
 
-    return t1->wakeup_time > t2->wakeup_time;
+    return t1->wakeup_time < t2->wakeup_time;
 }
