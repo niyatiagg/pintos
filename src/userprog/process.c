@@ -45,6 +45,10 @@ process_execute (const char *file_name)
   return tid;
 }
 
+/* Create a function for parsing the file name as the program name
+   and its arguments divided by spaces. */
+ // string_parser
+
 /* A thread function that loads a user process and starts it
    running. */
 static void
@@ -114,6 +118,9 @@ process_exit (void)
       pagedir_activate (NULL);
       pagedir_destroy (pd);
     }
+
+  //printing process's name(just the program name and not its arguments)
+  // and exit id before it exits
 }
 
 /* Sets up the CPU for running user code in the current
