@@ -16,7 +16,7 @@ syscall_init (void)
 static void
 syscall_handler (struct intr_frame *f UNUSED) 
 {
-    int number;
+   /* int number;
 
     switch(number) {
         case SYS_HALT:
@@ -35,12 +35,12 @@ syscall_handler (struct intr_frame *f UNUSED)
         case SYS_TELL:
         case SYS_CLOSE:
 
-    }
+    } */
   printf ("system call!\n");
   thread_exit ();
 }
 
-/* Terminates Pintos */
+/* Terminates Pintos
 
 void
 halt (void)
@@ -48,7 +48,7 @@ halt (void)
     shutdown_power_off ();
 }
 
-/* Terminates the current user program, returning status to the kernel. */
+ Terminates the current user program, returning status to the kernel.
 
 void
 exit (int status)
@@ -60,4 +60,4 @@ pid_t
 exec (const char *cmd_line)
 
 int
-wait (pid_t pid)
+wait (pid_t pid) */
