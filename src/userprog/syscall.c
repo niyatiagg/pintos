@@ -38,9 +38,9 @@ syscall_handler (struct intr_frame *f)
             int fd, ret;
             const void *buffer;
             unsigned size;
-            memcpy(f->esp + 4, &fd, sizeof(fd));
-            memcpy(f->esp + 8, &buffer, sizeof(buffer));
-            memcpy(f->esp + 12, &size, sizeof(size));
+            memcpy(&fd, f->esp + 4, sizeof(fd));
+            memcpy(&buffer, f->esp + 8, sizeof(buffer));
+            memcpy(&size, f->esp + 12, sizeof(size));
             ret = sys_write(fd, buffer, size);
             f->eax = (uint32_t) ret;
             break;
