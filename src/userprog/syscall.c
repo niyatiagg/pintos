@@ -1,5 +1,6 @@
 #include "userprog/syscall.h"
 #include <stdio.h>
+#include <string.h>
 #include <syscall-nr.h>
 #include "threads/interrupt.h"
 #include "threads/thread.h"
@@ -33,9 +34,9 @@ syscall_handler (struct intr_frame *f)
         case SYS_OPEN:
         case SYS_FILESIZE:
         case SYS_READ:
-        case SYS_WRITE:
+        case SYS_WRITE: {
             int fd, ret;
-            const void * buffer;
+            const void *buffer;
             unsigned size;
             memcpy(f->esp + 4, &fd, sizeof(fd));
             memcpy(f->esp + 8, &buffer, sizeof(buffer));
@@ -43,6 +44,7 @@ syscall_handler (struct intr_frame *f)
             ret = sys_write(fd, buffer, size);
             f->eax = (uint32_t) ret;
             break;
+        }
         case SYS_SEEK:
         case SYS_TELL:
         case SYS_CLOSE:;
