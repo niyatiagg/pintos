@@ -7,7 +7,7 @@
 #include "devices/shutdown.h"
 
 static void syscall_handler (struct intr_frame *);
-void sys_write(int fd, void *buffer, unsigned size);
+int sys_write(int fd, void *buffer, unsigned size);
 void halt (void);
 void exit (int status);
 
@@ -54,7 +54,7 @@ syscall_handler (struct intr_frame *f)
   thread_exit ();
 }
 
-void
+int
 sys_write(int fd, void *buffer, unsigned size) {
     int ret;
     if(fd == 1) { // write to stdout
