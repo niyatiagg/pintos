@@ -3,6 +3,7 @@
 #include <syscall-nr.h>
 #include "threads/interrupt.h"
 #include "threads/thread.h"
+#include "devices/shutdown.h"
 
 static void syscall_handler (struct intr_frame *);
 
@@ -18,7 +19,9 @@ syscall_handler (struct intr_frame *f UNUSED)
     int number;
 
     switch(number) {
-        case SYS_HALT: halt();
+        case SYS_HALT:
+            halt ();
+            break;
         case SYS_EXIT: exit();
         case SYS_EXEC:
         case SYS_WAIT:
@@ -36,3 +39,25 @@ syscall_handler (struct intr_frame *f UNUSED)
   printf ("system call!\n");
   thread_exit ();
 }
+
+/* Terminates Pintos */
+
+void
+halt (void)
+{
+    shutdown_power_off ();
+}
+
+/* Terminates the current user program, returning status to the kernel. */
+
+void
+exit (int status)
+{
+
+}
+
+pid_t
+exec (const char *cmd_line)
+
+int
+wait (pid_t pid)
