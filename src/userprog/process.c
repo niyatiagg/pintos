@@ -108,10 +108,11 @@ argument_parser (char** temp, int count, void **esp)
   *(int*)*esp = 0;
 
   //pushing addr of addrs
-  while(i-- > 0) {
+    for (i = count - 1; i >= 0; i--)
+    {
       *esp -= 4;
-      *(int*)*esp = args_add[i-1];
-  }
+      *(int*)*esp = args_add[i];
+    }
 
   //putting addr of 1st argument
   *esp -= 4;
