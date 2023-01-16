@@ -96,7 +96,7 @@ argument_parser (char** temp, int count, void **esp)
   int args_add[count];
   for(i = 0; i<count; i++) {
       length = strlen(temp[i]) + 1;
-      *esp = -length;
+      *esp -= length;
       args_add[i] = (int) *esp;
   }
   //aligning the words
