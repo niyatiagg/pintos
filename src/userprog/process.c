@@ -108,11 +108,11 @@ argument_parser (char** temp, int count, void **esp)
   *(int*)*esp = 0;
 
   //pushing addr of addrs
-    for (i = count - 1; i >= 0; i--)
-    {
-      *esp -= 4;
-      *(int*)*esp = args_add[i];
-    }
+  for (i = count - 1; i >= 0; i--)
+  {
+    *esp -= 4;
+    *(int*)*esp = args_add[i];
+  }
 
   //putting addr of 1st argument
   *esp -= 4;
@@ -139,6 +139,11 @@ argument_parser (char** temp, int count, void **esp)
 int
 process_wait (tid_t child_tid UNUSED) 
 {
+  int dummy = 0, i;
+  for(i=0; i<7 * 10000 * 10000; ++i) {
+     dummy += i;
+     ASSERT(dummy != 0);
+  }
   return -1;
 }
 
