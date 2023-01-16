@@ -14,15 +14,15 @@ syscall_init (void)
 }
 
 static void
-syscall_handler (struct intr_frame *f UNUSED) 
+syscall_handler (struct intr_frame *f)
 {
-   /* int number;
+    int number = *(int *)f->esp;
 
     switch(number) {
         case SYS_HALT:
             halt ();
             break;
-        case SYS_EXIT: exit();
+        case SYS_EXIT: exit(); break;
         case SYS_EXEC:
         case SYS_WAIT:
         case SYS_CREATE:
@@ -31,33 +31,43 @@ syscall_handler (struct intr_frame *f UNUSED)
         case SYS_FILESIZE:
         case SYS_READ:
         case SYS_WRITE:
+            int fd, ret;
+            const void * buffer;
+            unsigned size;
+            memcpy(f->esp + 4, &fd, sizeof(fd));
+            memcpy(f->esp + 8, &buffer, sizeof(buffer));
+            memcpy(f->esp + 12, &size, sizeof(size));
+            ret = sys_write(fd, buffer, size);
+            f->eax = (uint32_t) ret;
+            break;
         case SYS_SEEK:
         case SYS_TELL:
         case SYS_CLOSE:
 
     } */
-  //printf ("system call!\n");
+  printf ("system call!\n");
   thread_exit ();
 }
 
-/* Terminates Pintos
+void sys_write(int fd, void *buffer, unsigned size) {
+    int ret;
+    if(fd == 1) { // write to stdout
+        putbuf(buffer, size);
+        ret = size;
+    } else {
+        ret = -1;
+    }
+    return ret;
+}
 
 void
 halt (void)
 {
-    shutdown_power_off ();
+  shutdown_power_off ();
 }
-
- Terminates the current user program, returning status to the kernel.
 
 void
 exit (int status)
 {
 
 }
-
-pid_t
-exec (const char *cmd_line)
-
-int
-wait (pid_t pid) */
