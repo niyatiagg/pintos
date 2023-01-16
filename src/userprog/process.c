@@ -139,8 +139,9 @@ argument_parser (char** temp, int count, void **esp)
 int
 process_wait (tid_t child_tid UNUSED) 
 {
-  int dummy = 0, i;
-  for(i=0; i<7 * 10000 * 10000; ++i) {
+  int dummy = 0;
+  int i;
+  for(i=1; i<7 * 10000 * 10000; i++) {
      dummy += i;
      ASSERT(dummy != 0);
   }
