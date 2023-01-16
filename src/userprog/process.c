@@ -59,7 +59,7 @@ start_process (void *file_name_)
   char* save_ptr;
   int count = 0;
 
-  for (token = strtok_r (s, " ", &save_ptr); token != NULL;
+  for (token = strtok_r (file_name, " ", &save_ptr); token != NULL;
          token = strtok_r (NULL, " ", &save_ptr)) {
       temp[count++] = token;
   }
