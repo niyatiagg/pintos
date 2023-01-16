@@ -26,7 +26,7 @@ syscall_handler (struct intr_frame *f)
         case SYS_HALT:
             halt ();
             break;
-        case SYS_EXIT: exit(); break;
+        case SYS_EXIT: exit(0); break;
         case SYS_EXEC:
         case SYS_WAIT:
         case SYS_CREATE:
