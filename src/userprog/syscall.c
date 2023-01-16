@@ -6,6 +6,9 @@
 #include "devices/shutdown.h"
 
 static void syscall_handler (struct intr_frame *);
+void sys_write(int fd, void *buffer, unsigned size);
+void halt (void);
+void exit (int status);
 
 void
 syscall_init (void) 
@@ -42,14 +45,15 @@ syscall_handler (struct intr_frame *f)
             break;
         case SYS_SEEK:
         case SYS_TELL:
-        case SYS_CLOSE:
+        case SYS_CLOSE:;
 
-    } */
+    }
   printf ("system call!\n");
   thread_exit ();
 }
 
-void sys_write(int fd, void *buffer, unsigned size) {
+void
+sys_write(int fd, void *buffer, unsigned size) {
     int ret;
     if(fd == 1) { // write to stdout
         putbuf(buffer, size);
