@@ -18,6 +18,7 @@
 #include "threads/thread.h"
 #include "threads/vaddr.h"
 
+static void argument_parser (char** temp, int count, void **esp);
 static thread_func start_process NO_RETURN;
 static bool load (const char *cmdline, void (**eip) (void), void **esp);
 
@@ -30,14 +31,14 @@ process_execute (const char *file_name)
 {
   char *fn_copy;
   tid_t tid;
-
+  char *save_ptr;
   /* Make a copy of FILE_NAME.
      Otherwise there's a race between the caller and load(). */
   fn_copy = palloc_get_page (0);
   if (fn_copy == NULL)
     return TID_ERROR;
   strlcpy (fn_copy, file_name, PGSIZE);
-
+  file_name = strtok_r((char *) file_name, " ", &save_ptr);
   /* Create a new thread to execute FILE_NAME. */
   tid = thread_create (file_name, PRI_DEFAULT, start_process, fn_copy);
   if (tid == TID_ERROR)
@@ -53,6 +54,15 @@ start_process (void *file_name_)
   char *file_name = file_name_;
   struct intr_frame if_;
   bool success;
+  char* temp[50];
+  char* token;
+  char* save_ptr;
+  int count = 0;
+
+  for (token = strtok_r (file_name, " ", &save_ptr); token != NULL;
+         token = strtok_r (NULL, " ", &save_ptr)) {
+      temp[count++] = token;
+  }
 
   /* Initialize interrupt frame and load executable. */
   memset (&if_, 0, sizeof if_);
@@ -61,11 +71,13 @@ start_process (void *file_name_)
   if_.eflags = FLAG_IF | FLAG_MBS;
   success = load (file_name, &if_.eip, &if_.esp);
 
+  // puts it onto stack
+  argument_parser(&temp, count, &if_.esp);
   /* If load failed, quit. */
   palloc_free_page (file_name);
   if (!success) 
     thread_exit ();
-
+  // include code segment here.
   /* Start the user process by simulating a return from an
      interrupt, implemented by intr_exit (in
      threads/intr-stubs.S).  Because intr_exit takes all of its
@@ -74,6 +86,45 @@ start_process (void *file_name_)
      and jump to it. */
   asm volatile ("movl %0, %%esp; jmp intr_exit" : : "g" (&if_) : "memory");
   NOT_REACHED ();
+}
+
+static void
+argument_parser (char** temp, int count, void **esp)
+{
+  int i;
+  int length = 0;
+  int args_add[count];
+  for(i = 0; i<count; i++) {
+      length = strlen(temp[i]) + 1;
+      *esp -= length;
+      memcpy(*esp, temp[i], length);
+      args_add[i] = (int) *esp;
+  }
+  //aligning the words
+  *esp = (int) *esp & 0xfffffffc;
+
+  //putting a null
+  *esp -= 4;
+  *(int*)*esp = 0;
+
+  //pushing addr of addrs
+  for (i = count - 1; i >= 0; i--)
+  {
+    *esp -= 4;
+    *(int*)*esp = args_add[i];
+  }
+
+  //putting addr of 1st argument
+  *esp -= 4;
+  *(int*)*esp = (int)*esp + 4;
+
+  //putting number of arguments
+  *esp -= 4;
+  *(int*)*esp = count;
+
+  //putting return addr
+  *esp -= 4;
+  *(int*)*esp = 0;
 }
 
 /* Waits for thread TID to die and returns its exit status.  If
@@ -88,6 +139,12 @@ start_process (void *file_name_)
 int
 process_wait (tid_t child_tid UNUSED) 
 {
+  int dummy = 0;
+  int i;
+  for(i=1; i<7 * 10000 * 10000; i++) {
+     dummy += i;
+     ASSERT(dummy != 0);
+  }
   return -1;
 }
 
@@ -114,6 +171,9 @@ process_exit (void)
       pagedir_activate (NULL);
       pagedir_destroy (pd);
     }
+
+  //printing process's name(just the program name and not its arguments)
+  // and exit id before it exits
 }
 
 /* Sets up the CPU for running user code in the current
@@ -437,7 +497,7 @@ setup_stack (void **esp)
     {
       success = install_page (((uint8_t *) PHYS_BASE) - PGSIZE, kpage, true);
       if (success)
-        *esp = PHYS_BASE;
+        *esp = PHYS_BASE - 12;
       else
         palloc_free_page (kpage);
     }
