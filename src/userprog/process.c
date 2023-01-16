@@ -114,14 +114,14 @@ argument_parser (char** temp, int count, void **esp)
 
   //putting addr of 1st argument
   *esp -= 4;
-  *(int*)*esp = *(int*)*esp + 4;
+  *(int*)*esp = (int)*esp + 4;
 
   //putting number of arguments
-  *esp -=4;
+  *esp -= 4;
   *(int*)*esp = count;
 
   //putting return addr
-  *esp -=4;
+  *esp -= 4;
   *(int*)*esp = 0;
 }
 
