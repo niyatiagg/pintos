@@ -381,7 +381,7 @@ thread_set_priority (int new_priority)
 {
   int old_pri = thread_current ()->priority;
   thread_current ()->priority = new_priority;
-  thread_current ()->old_priority = new_priority
+  thread_current ()->old_priority = new_priority;
 
   if (old_pri > new_priority)
       thread_yield();
@@ -550,7 +550,8 @@ next_thread_to_run (void)
   if (list_empty (&ready_list))
     return idle_thread;
   else
-    return list_entry (list_pop_front (&ready_list), struct thread, elem);;
+    list_sort(&ready_list, priority_compare, NULL);
+    return list_entry (list_pop_front (&ready_list), struct thread, elem);
 }
 
 /* Completes a thread switch by activating the new thread's page

@@ -115,6 +115,7 @@ sema_up (struct semaphore *sema)
   old_level = intr_disable ();
   sema->value++;
   if (!list_empty (&sema->waiters)) {
+      list_sort(&sema->waiters, priority_compare, NULL);
       struct thread *th = list_entry (list_pop_front (&sema->waiters), struct thread, elem);
       thread_unblock (th);
   }
@@ -200,7 +201,7 @@ lock_acquire (struct lock *lock)
   if(lock->holder != NULL) {
       struct thread *t = lock->holder;
       if(t->priority < thread_current ()->priority) {
-          thread_donate_priority (t, thread_current ()->priority);
+          thread_donate_priority(t, thread_current()->priority);
       }
   }
   sema_down (&lock->semaphore);
