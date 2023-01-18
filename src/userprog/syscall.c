@@ -10,6 +10,7 @@ static void syscall_handler (struct intr_frame *);
 int sys_write(int fd, void *buffer, unsigned size);
 void halt (void);
 void exit (int status);
+void *check_user_args (const void *uaddr)
 
 void
 syscall_init (void) 
@@ -38,6 +39,12 @@ syscall_handler (struct intr_frame *f)
             int fd, ret;
             const void *buffer;
             unsigned size;
+            if(check_user_args(f->esp + 4) == NULL ||
+                check_user_args(f->esp + 8) == NULL ||
+                  check_user_args(f->esp + 12) == NULL) {
+                thread_exit();
+            }
+
             memcpy(&fd, f->esp + 4, sizeof(fd));
             memcpy(&buffer, f->esp + 8, sizeof(buffer));
             memcpy(&size, f->esp + 12, sizeof(size));
@@ -57,6 +64,9 @@ syscall_handler (struct intr_frame *f)
 int
 sys_write(int fd, void *buffer, unsigned size) {
     int ret;
+    if(check_user_args(buffer) == NULL || check_user_args((((int *) buffer) + size-1 ) == NULL) {
+        thread_exit ();
+    }
     if(fd == 1) { // write to stdout
         putbuf(buffer, size);
         ret = size;
@@ -76,4 +86,14 @@ void
 exit (int status)
 {
 
+}
+
+void *
+check_user_args (const void *uaddr)
+{
+  uint32_t pd = active_pd ();
+  if(!is_user_vaddr (uaddr))
+      return NULL;
+
+  return pagedir_get_page(&pd, uaddr);
 }
