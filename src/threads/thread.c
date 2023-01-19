@@ -97,7 +97,7 @@ void
 thread_init (void) 
 {
   ASSERT (intr_get_level () == INTR_OFF);
-  lock_init (&donated_lock);
+
   lock_init (&tid_lock);
   lock_init (&sleep_lock);
   list_init (&ready_list);
@@ -381,13 +381,13 @@ thread_foreach (thread_action_func *func, void *aux)
 void
 thread_set_priority (int new_priority) 
 {
-  if(&donated_lock == NULL) {
+  if(thread_current ()->donated_lock == NULL) {
       int old_pri = thread_current ()->priority;
       thread_current ()->priority = new_priority;
       thread_current ()->old_priority = new_priority;
       if (old_pri > new_priority)
           thread_yield();
-      &donated_lock = NULL;
+      thread_current ()->donated_lock = NULL;
   }
 
 }
@@ -396,7 +396,7 @@ thread_set_priority (int new_priority)
 void
 thread_donate_priority (struct thread *t, int donated_priority, struct lock *lock)
 {
-    &donated_lock = &lock;
+    t->donated_lock = lock;
     t->priority = donated_priority;
 }
 
@@ -526,7 +526,7 @@ init_thread (struct thread *t, const char *name, int priority)
   t->priority = priority;
   t->old_priority = priority;
   t->magic = THREAD_MAGIC;
-  &donated_lock = NULL;
+  t->donated_lock = NULL;
   old_level = intr_disable ();
   list_push_back (&all_list, &t->allelem);
   intr_set_level (old_level);
