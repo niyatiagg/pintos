@@ -42,6 +42,8 @@ static struct lock tid_lock;
 
 static struct lock sleep_lock;
 
+
+
 /* Stack frame for kernel_thread(). */
 struct kernel_thread_frame 
   {
@@ -379,18 +381,20 @@ thread_foreach (thread_action_func *func, void *aux)
 void
 thread_set_priority (int new_priority) 
 {
-  int old_pri = thread_current ()->priority;
-  thread_current ()->priority = new_priority;
-  thread_current ()->old_priority = new_priority;
-
-  if (old_pri > new_priority)
-      thread_yield();
+   thread_current ()->old_priority = new_priority;
+   if (thread_current ()->donated_lock == NULL) {
+     int old_pri = thread_current ()->priority;
+     thread_current ()->priority = new_priority;
+     if (old_pri > new_priority)
+       thread_yield();
+  }
 }
 
 /* Donate priority to a lower priority thread */
 void
-thread_donate_priority (struct thread *t, int donated_priority)
+thread_donate_priority (struct thread *t, int donated_priority, struct lock *lock)
 {
+    t->donated_lock = lock;
     t->priority = donated_priority;
 }
 
@@ -520,7 +524,7 @@ init_thread (struct thread *t, const char *name, int priority)
   t->priority = priority;
   t->old_priority = priority;
   t->magic = THREAD_MAGIC;
-
+  t->donated_lock = NULL;
   old_level = intr_disable ();
   list_push_back (&all_list, &t->allelem);
   intr_set_level (old_level);

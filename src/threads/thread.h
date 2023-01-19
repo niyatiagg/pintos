@@ -90,7 +90,7 @@ struct thread
     int priority;                       /* Priority. */
     int old_priority;                   /* Original priority */
     struct list_elem allelem;           /* List element for all threads list. */
-
+    struct lock *donated_lock;
     /* Shared between thread.c and synch.c. */
     struct list_elem elem;              /* List element. */
     int64_t sleep_ticks;                /* sleep time */
@@ -129,7 +129,7 @@ const char *thread_name (void);
 
 void thread_exit (void) NO_RETURN;
 void thread_yield (void);
-void thread_donate_priority (struct thread *, int donated_priority);
+void thread_donate_priority (struct thread *, int donated_priority, struct lock *);
 
 /* Performs some operation on thread t, given auxiliary data AUX. */
 typedef void thread_action_func (struct thread *t, void *aux);
