@@ -382,29 +382,28 @@ void
 thread_set_priority (int new_priority)
 {
   int old_pri = thread_current()->priority;
-  thread_current ()->old_priority = new_priority;
+  thread_current()->old_priority = new_priority;
   thread_current()->priority = new_priority;
   if (old_pri > new_priority)
     thread_yield();
-  }
 }
 
 /* Donate priority to a lower priority thread */
 void
 thread_donate_priority (struct thread *t, int donated_priority, struct lock *lock)
 {
-    t->priority = donated_priority;
-    lock->priority = donated_priority;
+  t->priority = donated_priority;
+  lock->priority = donated_priority;
 }
 
 /* Sets the priority of thread to new priority but not old_priority */
 void
 thread_reset_priority (int new_priority)
 {
-    //int old_pri = thread_current()->priority;
-    thread_current()->priority = new_priority;
-    /*if (old_pri > new_priority)
-      thread_yield(); */
+  //int old_pri = thread_current()->priority;
+  thread_current()->priority = new_priority;
+  /*if (old_pri > new_priority)
+    thread_yield(); */
 }
 
 /* Returns the current thread's priority. */
