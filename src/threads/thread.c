@@ -97,7 +97,7 @@ void
 thread_init (void) 
 {
   ASSERT (intr_get_level () == INTR_OFF);
-
+  lock_init (&donated_lock);
   lock_init (&tid_lock);
   lock_init (&sleep_lock);
   list_init (&ready_list);
