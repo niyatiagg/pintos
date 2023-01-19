@@ -203,7 +203,7 @@ lock_acquire (struct lock *lock)
     if (lock->priority < thread_current ()->priority) {
       struct thread *t = lock->holder;
       if (!is_donated_lock) {
-        list_push_back(&t->donated_lock, &lock->elem);
+        list_push_back(&t->donated_locks, &lock->elem);
       }
       thread_donate_priority(t, thread_current()->priority, lock);
       is_donated_lock = true;
@@ -248,17 +248,17 @@ lock_release (struct lock *lock)
   sema_up (&lock->semaphore);
   if (is_donated_lock) {
     is_donated_lock = false;
-    if (&lock->elem == list_front(&thread_current ()->donated_locks))
+    if (&lock->elem == list_front (&thread_current ()->donated_locks))
       list_pop_front (&lock->elem);
 
-    else if (&lock->elem == list_back(&thread_current ()->donated_locks))
+    else if (&lock->elem == list_back (&thread_current ()->donated_locks))
       list_pop_back (&lock->elem);
 
     else list_remove (&lock->elem);
   }
 
   if (!list_empty (&thread_current ()->donated_locks)) {
-    list_sort(&thread_current ()->donated_lock, lock_compare, NULL);
+    list_sort (&thread_current ()->donated_locks, lock_compare, NULL);
     struct thread *th = list_entry (list_front (&thread_current ()->donated_locks), struct lock, elem);
     thread_reset_priority (th->priority);
     lock_priority = th->priority;
