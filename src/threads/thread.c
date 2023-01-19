@@ -381,11 +381,13 @@ thread_foreach (thread_action_func *func, void *aux)
 void
 thread_set_priority (int new_priority)
 {
-  int old_pri = thread_current()->priority;
   thread_current()->old_priority = new_priority;
-  thread_current()->priority = new_priority;
-  if (old_pri > new_priority)
-    thread_yield();
+  if(list_empty (&thread_current ()->donated_locks)) {
+    int old_pri = thread_current()->priority;
+    thread_current()->priority = new_priority;
+    if (old_pri > new_priority)
+      thread_yield();
+  }
 }
 
 /* Donate priority to a lower priority thread */
@@ -400,10 +402,7 @@ thread_donate_priority (struct thread *t, int donated_priority, struct lock *loc
 void
 thread_reset_priority (int new_priority)
 {
-  //int old_pri = thread_current()->priority;
   thread_current()->priority = new_priority;
-  /*if (old_pri > new_priority)
-    thread_yield(); */
 }
 
 /* Returns the current thread's priority. */
