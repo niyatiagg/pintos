@@ -385,7 +385,6 @@ thread_set_priority (int new_priority)
    if (thread_current ()->donated_lock == NULL) {
      int old_pri = thread_current ()->priority;
      thread_current ()->priority = new_priority;
-     thread_current ()->donated_lock = NULL;
      if (old_pri > new_priority)
        thread_yield();
   }
