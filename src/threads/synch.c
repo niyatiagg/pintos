@@ -181,6 +181,7 @@ lock_init (struct lock *lock)
 
   lock->holder = NULL;
   sema_init (&lock->semaphore, 1);
+  lock->priority = 64;
 }
 
 /* Acquires LOCK, sleeping until it becomes available if
@@ -198,14 +199,17 @@ lock_acquire (struct lock *lock)
   ASSERT (!intr_context ());
   ASSERT (!lock_held_by_current_thread (lock));
 
-  if(lock->holder != NULL) {
-      struct thread *t = lock->holder;
-      if(t->priority < thread_current ()->priority) {
-          thread_donate_priority(t, thread_current()->priority, lock);
-      }
+  if (lock->priority < thread_current ()->priority) {
+    lock->priority = thread_current ()->priority;
+    if (lock->holder->priority < thread_current ()->priority)
+      lock->holder->priority = thread_current ()->priority;
   }
+
   sema_down (&lock->semaphore);
+
   lock->holder = thread_current ();
+  lock->priority = thread_current ()->priority;
+  list_push_back(&thread_current ()->acquired_locks, &lock->elem);
 }
 
 /* Tries to acquires LOCK and returns true if successful or false
@@ -239,12 +243,21 @@ lock_release (struct lock *lock)
   ASSERT (lock != NULL);
   ASSERT (lock_held_by_current_thread (lock));
 
+  lock->priority = 64;
+  list_remove (&lock->elem);
   lock->holder = NULL;
-  sema_up (&lock->semaphore);
-  if (thread_current ()->donated_lock == lock) {
-    thread_current ()->donated_lock = NULL;
-    thread_set_priority (thread_current ()->old_priority);
+  struct lock *l = NULL;
+  if (!list_empty (&thread_current ()->acquired_locks)) {
+    list_sort (&thread_current ()->acquired_locks, lock_compare, NULL);
+    l = list_entry (list_front (&thread_current ()->acquired_locks), struct lock, elem);
   }
+
+  sema_up (&lock->semaphore);
+
+  if (l != NULL)
+    thread_reset_priority(l->priority);
+  else
+    thread_reset_priority(thread_current ()->old_priority);
 }
 
 /* Returns true if the current thread holds LOCK, false
@@ -367,6 +380,16 @@ priority_compare2 (const struct list_elem *a_, const struct list_elem *b_,
 {
     const struct semaphore_elem *first = list_entry (a_, struct semaphore_elem, elem);
     const struct semaphore_elem *second = list_entry (b_, struct semaphore_elem, elem);
+
+    return first->priority > second->priority;
+}
+
+static bool
+lock_compare (const struct list_elem *a_, const struct list_elem *b_,
+                  void *aux UNUSED)
+{
+    const struct lock *first = list_entry (a_, struct lock, elem);
+    const struct lock *second = list_entry (b_, struct lock, elem);
 
     return first->priority > second->priority;
 }

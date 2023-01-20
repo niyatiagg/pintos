@@ -90,11 +90,12 @@ struct thread
     int priority;                       /* Priority. */
     int old_priority;                   /* Original priority */
     struct list_elem allelem;           /* List element for all threads list. */
-    struct lock *donated_lock;
     /* Shared between thread.c and synch.c. */
     struct list_elem elem;              /* List element. */
     int64_t sleep_ticks;                /* sleep time */
     int64_t wakeup_time;                /* absolute time since booting of OS */
+    struct list acquired_locks;          /* list of lock elems that led to priority
+                                            donation to the current thread */
 
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
@@ -129,7 +130,6 @@ const char *thread_name (void);
 
 void thread_exit (void) NO_RETURN;
 void thread_yield (void);
-void thread_donate_priority (struct thread *, int donated_priority, struct lock *);
 
 /* Performs some operation on thread t, given auxiliary data AUX. */
 typedef void thread_action_func (struct thread *t, void *aux);
@@ -137,6 +137,7 @@ void thread_foreach (thread_action_func *, void *);
 
 int thread_get_priority (void);
 void thread_set_priority (int);
+void thread_reset_priority (int);
 
 int thread_get_nice (void);
 void thread_set_nice (int);
