@@ -24,7 +24,6 @@ struct lock
     struct thread *holder;      /* Thread holding lock (for debugging). */
     struct semaphore semaphore; /* Binary semaphore controlling access. */
     int priority;               /* Priority of the holder thread, otherwise 64. */
-    bool is_donated_lock;       /* True if it is a donated lock */
   };
 static bool priority_compare (const struct list_elem *, const struct list_elem *,
                          void *);

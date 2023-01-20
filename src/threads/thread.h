@@ -94,7 +94,7 @@ struct thread
     struct list_elem elem;              /* List element. */
     int64_t sleep_ticks;                /* sleep time */
     int64_t wakeup_time;                /* absolute time since booting of OS */
-    struct list donated_locks;          /* list of lock elems that led to priority
+    struct list acquired_locks;          /* list of lock elems that led to priority
                                             donation to the current thread */
 
 #ifdef USERPROG
