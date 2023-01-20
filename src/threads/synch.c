@@ -251,10 +251,10 @@ lock_release (struct lock *lock)
 
   if (!list_empty (&thread_current ()->donated_locks)) {
     list_sort (&thread_current ()->donated_locks, lock_compare, NULL);
-    struct thread *th = list_entry (list_front (&thread_current ()->donated_locks), struct lock, elem);
-    thread_reset_priority (th->priority);
+    struct lock *l = list_entry (list_front (&thread_current ()->donated_locks), struct lock, elem);
+    thread_reset_priority(l->priority);
   } else {
-    thread_set_priority(thread_current()->old_priority);
+    thread_reset_priority(thread_current ()->old_priority);
   }
 }
 
