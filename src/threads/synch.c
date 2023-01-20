@@ -202,11 +202,11 @@ lock_acquire (struct lock *lock)
 
   if (lock->priority < thread_current ()->priority) {
     struct thread *t = lock->holder;
+    thread_donate_priority(t, thread_current()->priority, lock);
     if (!lock->is_donated_lock) {
+      lock->is_donated_lock = true;
       list_push_back(&t->donated_locks, &lock->elem);
     }
-    thread_donate_priority(t, thread_current()->priority, lock);
-    lock->is_donated_lock = true;
   }
   sema_down (&lock->semaphore);
   lock->holder = thread_current ();
