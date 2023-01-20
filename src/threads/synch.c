@@ -200,6 +200,7 @@ lock_acquire (struct lock *lock)
   ASSERT (!intr_context ());
   ASSERT (!lock_held_by_current_thread (lock));
 
+  old_level = intr_disable ();
   if (lock->priority < thread_current ()->priority) {
     struct thread *t = lock->holder;
     thread_donate_priority(t, thread_current()->priority, lock);
@@ -208,6 +209,7 @@ lock_acquire (struct lock *lock)
       list_push_back(&t->donated_locks, &lock->elem);
     }
   }
+  intr_set_level (old_level);
   sema_down (&lock->semaphore);
   lock->holder = thread_current ();
   lock->priority = thread_current ()->priority;
@@ -247,6 +249,7 @@ lock_release (struct lock *lock)
   lock->holder = NULL;
   sema_up (&lock->semaphore);
   lock->priority = 64;
+  old_level = intr_disable ();
   if (lock->is_donated_lock) {
     lock->is_donated_lock = false;
     if (&lock->elem == list_front (&thread_current ()->donated_locks))
@@ -261,9 +264,10 @@ lock_release (struct lock *lock)
   if (!list_empty (&thread_current ()->donated_locks)) {
     list_sort (&thread_current ()->donated_locks, lock_compare, NULL);
     struct thread *th = list_entry (list_front (&thread_current ()->donated_locks), struct lock, elem);
+    intr_set_level (old_level);
     thread_reset_priority (th->priority);
-  }
-  else {
+  } else {
+    intr_set_level (old_level);
     thread_set_priority(thread_current()->old_priority);
   }
 }
