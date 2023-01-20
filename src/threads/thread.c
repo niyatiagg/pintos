@@ -382,7 +382,7 @@ void
 thread_set_priority (int new_priority)
 {
   thread_current()->old_priority = new_priority;
-  if(list_empty (&thread_current ()->donated_locks)) {
+  if (list_empty (&thread_current ()->donated_locks)) {
     int old_pri = thread_current()->priority;
     thread_current()->priority = new_priority;
     if (old_pri > new_priority)

@@ -200,14 +200,14 @@ lock_acquire (struct lock *lock)
   ASSERT (!intr_context ());
   ASSERT (!lock_held_by_current_thread (lock));
 
-    if (lock->priority < thread_current ()->priority) {
-      struct thread *t = lock->holder;
-      if (!lock->is_donated_lock) {
-        list_push_back(&t->donated_locks, &lock->elem);
-      }
-      thread_donate_priority(t, thread_current()->priority, lock);
-      lock->is_donated_lock = true;
+  if (lock->priority < thread_current ()->priority) {
+    struct thread *t = lock->holder;
+    if (!lock->is_donated_lock) {
+      list_push_back(&t->donated_locks, &lock->elem);
     }
+    thread_donate_priority(t, thread_current()->priority, lock);
+    lock->is_donated_lock = true;
+  }
   sema_down (&lock->semaphore);
   lock->holder = thread_current ();
   lock->priority = thread_current ()->priority;
@@ -261,12 +261,11 @@ lock_release (struct lock *lock)
     list_sort (&thread_current ()->donated_locks, lock_compare, NULL);
     struct thread *th = list_entry (list_front (&thread_current ()->donated_locks), struct lock, elem);
     thread_reset_priority (th->priority);
-    lock->priority = th->priority;
   }
   else {
     thread_set_priority(thread_current()->old_priority);
-    lock->priority = 64;
   }
+  lock->priority = 64;
 }
 
 /* Returns true if the current thread holds LOCK, false
