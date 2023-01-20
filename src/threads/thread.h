@@ -88,13 +88,15 @@ struct thread
     char name[16];                      /* Name (for debugging purposes). */
     uint8_t *stack;                     /* Saved stack pointer. */
     int priority;                       /* Priority. */
-    int old_priority;                   /* Old Priority */
+    int old_priority;                   /* Original priority */
     struct list_elem allelem;           /* List element for all threads list. */
-
     /* Shared between thread.c and synch.c. */
     struct list_elem elem;              /* List element. */
     int64_t sleep_ticks;                /* sleep time */
     int64_t wakeup_time;                /* absolute time since booting of OS */
+    struct list acquired_locks;         /* list of lock elems that led to priority
+                                            donation to the current thread */
+    struct lock *waiting_lock;          /* Reference to the lock on which the current thread waits on */
 
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
@@ -136,6 +138,7 @@ void thread_foreach (thread_action_func *, void *);
 
 int thread_get_priority (void);
 void thread_set_priority (int);
+void thread_reset_priority (int);
 
 int thread_get_nice (void);
 void thread_set_nice (int);

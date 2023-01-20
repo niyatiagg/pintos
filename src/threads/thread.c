@@ -42,6 +42,8 @@ static struct lock tid_lock;
 
 static struct lock sleep_lock;
 
+
+
 /* Stack frame for kernel_thread(). */
 struct kernel_thread_frame 
   {
@@ -377,13 +379,25 @@ thread_foreach (thread_action_func *func, void *aux)
 
 /* Sets the current thread's priority to NEW_PRIORITY. */
 void
-thread_set_priority (int new_priority) 
+thread_set_priority (int new_priority)
 {
-  int old_priority = thread_current ()->priority;
-  thread_current ()->priority = new_priority;
-
-  if (old_priority > new_priority)
+  if (thread_current ()->old_priority == thread_current ()->priority) {
+    int old_pri = thread_current ()->priority;
+    thread_current ()->old_priority = new_priority;
+    thread_current ()->priority = new_priority;
+    if (old_pri > new_priority)
       thread_yield();
+  } else {
+    thread_current ()->old_priority = new_priority;
+  }
+}
+
+void
+thread_reset_priority(int priority) {
+  int old_pri = thread_current ()->priority;
+  thread_current ()->priority = priority;
+  if (old_pri > thread_current ()->priority)
+    thread_yield();
 }
 
 /* Returns the current thread's priority. */
@@ -510,8 +524,10 @@ init_thread (struct thread *t, const char *name, int priority)
   strlcpy (t->name, name, sizeof t->name);
   t->stack = (uint8_t *) t + PGSIZE;
   t->priority = priority;
+  t->old_priority = priority;
   t->magic = THREAD_MAGIC;
-
+  list_init (&t->acquired_locks);
+  t->waiting_lock = NULL;
   old_level = intr_disable ();
   list_push_back (&all_list, &t->allelem);
   intr_set_level (old_level);
@@ -541,7 +557,8 @@ next_thread_to_run (void)
   if (list_empty (&ready_list))
     return idle_thread;
   else
-    return list_entry (list_pop_front (&ready_list), struct thread, elem);;
+    list_sort(&ready_list, priority_compare, NULL);
+    return list_entry (list_pop_front (&ready_list), struct thread, elem);
 }
 
 /* Completes a thread switch by activating the new thread's page

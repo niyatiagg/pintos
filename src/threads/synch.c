@@ -115,6 +115,7 @@ sema_up (struct semaphore *sema)
   old_level = intr_disable ();
   sema->value++;
   if (!list_empty (&sema->waiters)) {
+      list_sort(&sema->waiters, priority_compare, NULL);
       struct thread *th = list_entry (list_pop_front (&sema->waiters), struct thread, elem);
       thread_unblock (th);
   }
@@ -180,6 +181,7 @@ lock_init (struct lock *lock)
 
   lock->holder = NULL;
   sema_init (&lock->semaphore, 1);
+  lock->priority = 64;
 }
 
 /* Acquires LOCK, sleeping until it becomes available if
@@ -197,8 +199,22 @@ lock_acquire (struct lock *lock)
   ASSERT (!intr_context ());
   ASSERT (!lock_held_by_current_thread (lock));
 
+  if (lock->holder != NULL)
+    thread_current ()->waiting_lock = lock;
+  struct lock *l = lock;
+  while (l != NULL && l->holder != NULL && l->priority < thread_current ()->priority) {
+      l->priority = thread_current ()->priority;
+      if (l->holder->priority < thread_current ()->priority)
+        l->holder->priority = thread_current ()->priority;
+      l = l->holder->waiting_lock;
+  }
+
   sema_down (&lock->semaphore);
+
   lock->holder = thread_current ();
+  lock->priority = thread_current ()->priority;
+  list_push_back(&thread_current ()->acquired_locks, &lock->elem);
+  thread_current ()->waiting_lock = NULL;
 }
 
 /* Tries to acquires LOCK and returns true if successful or false
@@ -232,8 +248,21 @@ lock_release (struct lock *lock)
   ASSERT (lock != NULL);
   ASSERT (lock_held_by_current_thread (lock));
 
+  lock->priority = 64;
+  list_remove (&lock->elem);
   lock->holder = NULL;
+  struct lock *l = NULL;
+  if (!list_empty (&thread_current ()->acquired_locks)) {
+    list_sort (&thread_current ()->acquired_locks, lock_compare, NULL);
+    l = list_entry (list_front (&thread_current ()->acquired_locks), struct lock, elem);
+  }
+
   sema_up (&lock->semaphore);
+
+  if (l != NULL)
+    thread_reset_priority(l->priority);
+  else
+    thread_reset_priority(thread_current ()->old_priority);
 }
 
 /* Returns true if the current thread holds LOCK, false
@@ -356,6 +385,16 @@ priority_compare2 (const struct list_elem *a_, const struct list_elem *b_,
 {
     const struct semaphore_elem *first = list_entry (a_, struct semaphore_elem, elem);
     const struct semaphore_elem *second = list_entry (b_, struct semaphore_elem, elem);
+
+    return first->priority > second->priority;
+}
+
+static bool
+lock_compare (const struct list_elem *a_, const struct list_elem *b_,
+                  void *aux UNUSED)
+{
+    const struct lock *first = list_entry (a_, struct lock, elem);
+    const struct lock *second = list_entry (b_, struct lock, elem);
 
     return first->priority > second->priority;
 }
