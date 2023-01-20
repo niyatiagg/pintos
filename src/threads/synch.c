@@ -209,7 +209,7 @@ lock_acquire (struct lock *lock)
 
   lock->holder = thread_current ();
   lock->priority = thread_current ()->priority;
-  list_push_back(&t->donated_locks, &lock->elem);
+  list_push_back(&thread_current ()->donated_locks, &lock->elem);
 }
 
 /* Tries to acquires LOCK and returns true if successful or false
