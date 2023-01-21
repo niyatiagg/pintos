@@ -2,6 +2,8 @@
 #define USERPROG_PROCESS_H
 
 #include "threads/thread.h"
+typedef int pid_t;
+#define PID_ERROR ((pid_t) -1)
 
 //struct pcb {
 //    tid_t tid;                          /* Thread identifier. */
