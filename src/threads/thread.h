@@ -97,7 +97,7 @@ struct thread
     int64_t wakeup_time;                /* absolute time since booting of OS */
     struct list acquired_locks;         /* list of lock elems that led to priority
                                             donation to the current thread */
-
+    struct lock *waiting_lock;          /* Reference to the lock on which the current thread waits on */
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
     uint32_t *pagedir;                  /* Page directory. */
