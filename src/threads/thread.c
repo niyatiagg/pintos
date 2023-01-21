@@ -673,11 +673,13 @@ wakeup_compare (const struct list_elem *a_, const struct list_elem *b_,
 
 struct thread *give_thread (int tid) {
   struct list_elem *e;
-  for (e = list_begin (&all_list); e != list_end (&all_list);
-       e = list_next (e))
-  {
-    struct thread *t = list_entry (e, struct thread, elem);
-    if(t->tid == tid)
+  for (e = list_begin(&all_list); e != list_end(&all_list);
+       e = list_next(e)) {
+    struct thread *t = list_entry(e, struct thread, elem);
+    if (t->tid == tid)
       return t;
+  }
+
+  return thread_current();
 }
 
