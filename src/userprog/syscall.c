@@ -10,6 +10,7 @@ static void syscall_handler (struct intr_frame *);
 int sys_write(int fd, void *buffer, unsigned size);
 void halt (void);
 void exit (int status);
+pid_t exec (const char *file);
 void *check_user_args (const void *uaddr)
 
 void
@@ -24,11 +25,18 @@ syscall_handler (struct intr_frame *f)
     int number = *(int *)f->esp;
 
     switch(number) {
-        case SYS_HALT:
-            halt ();
-            break;
+        case SYS_HALT: {
+          halt ();
+          break;
+        }
         case SYS_EXIT: exit(0); break;
-        case SYS_EXEC:
+        case SYS_EXEC: {
+          if(check_user_args(f->esp + 4) == NULL)
+            thread_exit();
+
+          char *cname = (char *)(f->esp + 4);
+          exec(cname);
+        }
         case SYS_WAIT:
         case SYS_CREATE:
         case SYS_REMOVE:
@@ -96,4 +104,10 @@ check_user_args (const void *uaddr)
       return NULL;
 
   return pagedir_get_page(&pd, uaddr);
+}
+
+pid_t
+exec (const char *file)
+{
+  return process_execute(file);
 }

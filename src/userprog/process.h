@@ -3,6 +3,16 @@
 
 #include "threads/thread.h"
 
+struct child_proc {
+    tid_t tid;                          /* Thread identifier. */
+    struct list_elem childelem;         /* List element for children list. */
+    bool exited;                        /* Whether it has exited*/
+    bool waited;                        /* Whether it has waited for some
+                                            child. */
+    struct semaphore sema;              /* Wait semaphore. */
+    int exit_status;                    /* Status when it exits. */
+};
+
 tid_t process_execute (const char *file_name);
 int process_wait (tid_t);
 void process_exit (void);

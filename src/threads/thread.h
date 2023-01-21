@@ -97,7 +97,7 @@ struct thread
     struct list acquired_locks;         /* list of lock elems that led to priority
                                             donation to the current thread */
     struct lock *waiting_lock;          /* Reference to the lock on which the current thread waits on */
-
+    struct list 
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
     uint32_t *pagedir;                  /* Page directory. */
