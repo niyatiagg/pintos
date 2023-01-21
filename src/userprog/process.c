@@ -146,15 +146,16 @@ process_wait (tid_t child_tid) {
 
   else if ()
   */
-  struct list_elem *e;
-  for (e = list_begin(&thread_current()->child_procs); e != list_end(&thread_current()->child_procs);
-       e = list_next(e)) {
-    struct thread *t = list_entry(e, struct thread, elem);
-    if (t->tid == child_tid) {
-      sema_down(&t->wait_sema);
-      break;
-    }
-  }
+//  struct list_elem *e;
+//  for (e = list_begin(&thread_current()->child_procs); e != list_end(&thread_current()->child_procs);
+//       e = list_next(e)) {
+//    struct thread *t = list_entry(e, struct thread, elem);
+//    if (t->tid == child_tid) {
+//      sema_down(&t->wait_sema);
+//      break;
+//    }
+//  }
+  sema_down(&thread_current ()->wait_sema);
 }
 
 /* Free the current process's resources. */
@@ -180,7 +181,7 @@ process_exit (void)
       pagedir_activate (NULL);
       pagedir_destroy (pd);
     }
-  sema_up(&thread_current ()->wait_sema);
+  sema_up(thread_current ()->parent_sema);
   //printing process's name(just the program name and not its arguments)
   // and exit id before it exits
 }

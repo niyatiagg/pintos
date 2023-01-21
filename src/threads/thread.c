@@ -528,6 +528,7 @@ init_thread (struct thread *t, const char *name, int priority)
   t->magic = THREAD_MAGIC;
   list_init (&t->acquired_locks);
   sema_init(&t->wait_sema, 0);
+  t->parent_sema = &thread_current ()->wait_sema;
   list_init (&t->child_procs);
   t->waiting_lock = NULL;
   old_level = intr_disable ();

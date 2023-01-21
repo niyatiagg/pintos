@@ -103,6 +103,7 @@ struct thread
     uint32_t *pagedir;                  /* Page directory. */
     struct list child_procs;        /* list of all direct children of this thread */
     struct list_elem child_elem;
+    struct semaphore *parent_sema;
     struct semaphore wait_sema;
     int exit_status;
 #endif
