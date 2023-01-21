@@ -101,11 +101,11 @@ exit (int status)
 void *
 check_user_args (const void *uaddr)
 {
-  uint32_t pd = active_pd ();
+  uint32_t *pd = active_pd ();
   if(!is_user_vaddr (uaddr))
       return NULL;
 
-  return pagedir_get_page(&pd, uaddr);
+  return pagedir_get_page(pd, uaddr);
 }
 
 pid_t

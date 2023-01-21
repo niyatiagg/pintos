@@ -17,7 +17,6 @@
 #include "threads/palloc.h"
 #include "threads/thread.h"
 #include "threads/vaddr.h"
-#include "threads/thread.c"
 
 static void argument_parser (char** temp, int count, void **esp);
 static thread_func start_process NO_RETURN;
