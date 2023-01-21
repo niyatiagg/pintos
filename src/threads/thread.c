@@ -670,3 +670,14 @@ wakeup_compare (const struct list_elem *a_, const struct list_elem *b_,
 
     return t1->wakeup_time < t2->wakeup_time;
 }
+
+struct thread *give_thread (int tid) {
+  struct list_elem *e;
+  for (e = list_begin (&all_list); e != list_end (&all_list);
+       e = list_next (e))
+  {
+    struct thread *t = list_entry (e, struct thread, elem);
+    if(t->tid == tid)
+      return t;
+}
+

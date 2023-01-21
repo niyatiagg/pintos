@@ -17,6 +17,7 @@
 #include "threads/palloc.h"
 #include "threads/thread.h"
 #include "threads/vaddr.h"
+#include "threads/thread.c"
 
 static void argument_parser (char** temp, int count, void **esp);
 static thread_func start_process NO_RETURN;
@@ -44,16 +45,8 @@ process_execute (const char *file_name)
   if (tid == TID_ERROR)
     palloc_free_page (fn_copy);
 
-  struct list_elem *e;
-  for (e = list_begin (&all_list); e != list_end (&all_list);
-       e = list_next (e))
-  {
-    struct thread *t = list_entry (e, struct thread, elem);
-    if(t->tid == tid) {
-      list_push_back(&thread_current ()->child_procs, &t->child_elem);
-      break;
-    }
-  }
+  struct thread *t = give_thread(tid);
+  list_push_back(&thread_current ()->child_procs, &t->child_elem);
   return tid;
 }
 
@@ -157,8 +150,7 @@ process_wait (tid_t child_tid) {
   struct list_elem *e;
   for (e = list_begin(&thread_current()->child_procs); e != list_end(&thread_current()->child_procs);
        e = list_next(e)) {
-    struct thread *t = list_entry(e,
-    struct thread, elem);
+    struct thread *t = list_entry(e, struct thread, elem);
     if (t->tid == child_tid) {
       sema_down(&t->wait_sema);
       break;
