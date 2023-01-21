@@ -42,7 +42,10 @@ process_execute (const char *file_name)
   /* Create a new thread to execute FILE_NAME. */
   tid = thread_create (file_name, PRI_DEFAULT, start_process, fn_copy);
   if (tid == TID_ERROR)
-    palloc_free_page (fn_copy); 
+    palloc_free_page (fn_copy);
+
+  struct thread *t = give_thread(tid);
+  list_push_back(&thread_current ()->child_procs, &t->child_elem);
   return tid;
 }
 
@@ -137,15 +140,23 @@ argument_parser (char** temp, int count, void **esp)
    This function will be implemented in problem 2-2.  For now, it
    does nothing. */
 int
-process_wait (tid_t child_tid UNUSED) 
-{
-  int dummy = 0;
-  int i;
-  for(i=1; i<7 * 10000 * 10000; i++) {
-     dummy += i;
-     ASSERT(dummy != 0);
-  }
-  return -1;
+process_wait (tid_t child_tid) {
+  /* if (child_tid == -1)
+    return -1;
+
+  else if ()
+  */
+//  struct list_elem *e;
+//  for (e = list_begin(&thread_current()->child_procs); e != list_end(&thread_current()->child_procs);
+//       e = list_next(e)) {
+//    struct thread *t = list_entry(e, struct thread, elem);
+//    if (t->tid == child_tid) {
+//      sema_down(&t->wait_sema);
+//      break;
+//    }
+//  }
+  sema_down(&thread_current ()->wait_sema);
+  return 0;
 }
 
 /* Free the current process's resources. */
@@ -171,9 +182,10 @@ process_exit (void)
       pagedir_activate (NULL);
       pagedir_destroy (pd);
     }
-
+  sema_up(thread_current ()->parent_sema);
   //printing process's name(just the program name and not its arguments)
   // and exit id before it exits
+
 }
 
 /* Sets up the CPU for running user code in the current
@@ -497,7 +509,7 @@ setup_stack (void **esp)
     {
       success = install_page (((uint8_t *) PHYS_BASE) - PGSIZE, kpage, true);
       if (success)
-        *esp = PHYS_BASE - 12;
+        *esp = PHYS_BASE;
       else
         palloc_free_page (kpage);
     }

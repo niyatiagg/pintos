@@ -4,6 +4,7 @@
 #include <debug.h>
 #include <list.h>
 #include <stdint.h>
+#include "threads/synch.h"
 
 /* States in a thread's life cycle. */
 enum thread_status
@@ -97,10 +98,14 @@ struct thread
     struct list acquired_locks;         /* list of lock elems that led to priority
                                             donation to the current thread */
     struct lock *waiting_lock;          /* Reference to the lock on which the current thread waits on */
-
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
     uint32_t *pagedir;                  /* Page directory. */
+    struct list child_procs;        /* list of all direct children of this thread */
+    struct list_elem child_elem;
+    struct semaphore *parent_sema;
+    struct semaphore wait_sema;
+    int exit_status;
 #endif
 
     /* Owned by thread.c. */
@@ -139,6 +144,7 @@ void thread_foreach (thread_action_func *, void *);
 int thread_get_priority (void);
 void thread_set_priority (int);
 void thread_reset_priority (int);
+struct thread *give_thread (int);
 
 int thread_get_nice (void);
 void thread_set_nice (int);
