@@ -97,10 +97,14 @@ struct thread
     struct list acquired_locks;         /* list of lock elems that led to priority
                                             donation to the current thread */
     struct lock *waiting_lock;          /* Reference to the lock on which the current thread waits on */
-    struct list 
+
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
     uint32_t *pagedir;                  /* Page directory. */
+    struct list child_procs;        /* list of all direct children of this thread */
+    struct list_elem child_elem;
+    struct semaphore wait_sema;
+    int exit_status;
 #endif
 
     /* Owned by thread.c. */
