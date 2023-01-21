@@ -11,7 +11,7 @@ int sys_write(int fd, void *buffer, unsigned size);
 void halt (void);
 void exit (int status);
 pid_t exec (const char *file);
-void *check_user_args (const void *uaddr)
+void *check_user_args (const void *uaddr);
 
 void
 syscall_init (void) 
