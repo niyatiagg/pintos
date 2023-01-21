@@ -72,7 +72,7 @@ syscall_handler (struct intr_frame *f)
 int
 sys_write(int fd, void *buffer, unsigned size) {
     int ret;
-    if(check_user_args(buffer) == NULL || check_user_args((((int *) buffer) + size-1 ) == NULL) {
+    if(check_user_args(buffer) == NULL || check_user_args(((int *) buffer) + size-1 ) == NULL) {
         thread_exit ();
     }
     if(fd == 1) { // write to stdout
