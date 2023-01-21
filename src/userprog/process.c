@@ -156,6 +156,7 @@ process_wait (tid_t child_tid) {
 //    }
 //  }
   sema_down(&thread_current ()->wait_sema);
+  return 0;
 }
 
 /* Free the current process's resources. */
@@ -184,6 +185,7 @@ process_exit (void)
   sema_up(thread_current ()->parent_sema);
   //printing process's name(just the program name and not its arguments)
   // and exit id before it exits
+
 }
 
 /* Sets up the CPU for running user code in the current
