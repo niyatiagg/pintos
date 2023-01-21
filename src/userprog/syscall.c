@@ -67,8 +67,6 @@ syscall_handler (struct intr_frame *f)
         case SYS_CLOSE:;
 
     }
-  printf ("system call!\n");
-  thread_exit ();
 }
 
 int
