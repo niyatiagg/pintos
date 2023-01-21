@@ -93,7 +93,7 @@ halt (void)
 void
 exit (int status)
 {
-
+  thread_exit();
 }
 
 void *
