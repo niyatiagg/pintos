@@ -148,22 +148,22 @@ argument_parser (char** temp, int count, void **esp)
    This function will be implemented in problem 2-2.  For now, it
    does nothing. */
 int
-process_wait (tid_t child_tid)
-{
+process_wait (tid_t child_tid) {
   /* if (child_tid == -1)
     return -1;
 
   else if ()
   */
   struct list_elem *e;
-  for (e = list_begin (&thread_current ()->child_procs); e != list_end (&thread_current ()->child_procs);
-       e = list_next (e))
-  {
-    struct thread *t = list_entry (e, struct thread, elem);
-    if(t->tid == child_tid) {
-      sema_down (&t->wait_sema);
+  for (e = list_begin(&thread_current()->child_procs); e != list_end(&thread_current()->child_procs);
+       e = list_next(e)) {
+    struct thread *t = list_entry(e,
+    struct thread, elem);
+    if (t->tid == child_tid) {
+      sema_down(&t->wait_sema);
       break;
     }
+  }
 }
 
 /* Free the current process's resources. */
