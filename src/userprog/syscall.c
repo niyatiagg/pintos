@@ -10,6 +10,8 @@
 
 static void syscall_handler (struct intr_frame *);
 int sys_write(int fd, void *buffer, unsigned size);
+bool sys_create (const char *file, unsigned initial_size);
+bool sys_remove (const char *file_name);
 void halt (void);
 void exit (int status);
 pid_t exec (const char *file);
@@ -47,7 +49,7 @@ syscall_handler (struct intr_frame *f)
             thread_exit();
 
           char *file_name = (char *)(f->esp + 4);
-          uint_32t initial_size = (int *)(f->esp + 8);
+          unsigned initial_size = (int *)(f->esp + 8);
           sys_create(file_name, initial_size);
         }
         case SYS_REMOVE: {
