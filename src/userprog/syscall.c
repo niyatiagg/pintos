@@ -14,6 +14,7 @@ void halt (void);
 void exit (int status);
 pid_t exec (const char *file);
 void *check_user_args (const void *uaddr);
+static struct lock filesys_lock;
 
 void
 syscall_init (void) 
@@ -40,9 +41,29 @@ syscall_handler (struct intr_frame *f)
           exec(cname);
         }
         case SYS_WAIT:
-        case SYS_CREATE:
-        case SYS_REMOVE:
-        case SYS_OPEN:
+        case SYS_CREATE: {
+          if(check_user_args(f->esp + 4) == NULL ||
+              check_user_args(f->esp + 8) == NULL)
+            thread_exit();
+
+          char *file_name = (char *)(f->esp + 4);
+          uint_32t initial_size = (int *)(f->esp + 8);
+          sys_create(file_name, initial_size);
+        }
+        case SYS_REMOVE: {
+          if(check_user_args(f->esp + 4) == NULL)
+            thread_exit();
+
+          char *file_name = (char *)(f->esp + 4);
+          sys_remove(file_name);
+        }
+        case SYS_OPEN: {
+          if(check_user_args(f->esp + 4) == NULL)
+            thread_exit();
+
+          char *file_name = (char *)(f->esp + 4);
+          sys_open(file_name);
+        }
         case SYS_FILESIZE:
         case SYS_READ:
         case SYS_WRITE: {
@@ -111,4 +132,16 @@ pid_t
 exec (const char *file)
 {
   return process_execute(file);
+}
+
+bool
+sys_create (const char *file, unsigned initial_size)
+{
+  return filesys_create(file, initial_size);
+}
+
+bool
+sys_remove (const char *file_name)
+{
+  return filesys_remove(file_name);
 }
