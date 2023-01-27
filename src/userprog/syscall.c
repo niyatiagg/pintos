@@ -104,7 +104,9 @@ syscall_handler (struct intr_frame *f)
 int
 sys_write(int fd, void *buffer, unsigned size) {
     int ret;
-    if(check_user_args(buffer) == NULL || check_user_args(((int *) buffer) + size-1 ) == NULL) {
+    if(check_user_args(buffer) == NULL ||
+        check_user_args(((int *) buffer) + size-1 ) == NULL)
+    {
         thread_exit ();
     }
     if(fd == 1) { // write to stdout
@@ -148,6 +150,8 @@ exec (const char *file)
 bool
 sys_create (const char *file, unsigned initial_size)
 {
+  if (check_user_args(file) == NULL)
+    thread_exit ();
   bool ret;
   lock_acquire (&filesys_lock);
   ret = filesys_create(file, initial_size);
@@ -158,6 +162,8 @@ sys_create (const char *file, unsigned initial_size)
 bool
 sys_remove (const char *file_name)
 {
+  if (check_user_args(file_name) == NULL)
+    thread_exit ();
   bool ret;
   lock_acquire (&filesys_lock);
   ret = filesys_remove(file_name);
