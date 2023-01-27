@@ -215,7 +215,7 @@ sys_open (const char *file_name)
 void
 sys_close (int fd)
 {
-  if (thread_current ()->file_d[fd] != NULL) {
+  if (fd < 0 || fd > 128 || thread_current ()->file_d[fd] != NULL) {
     file_close (thread_current ()->file_d[fd]);
   }
   else exit(-1);
