@@ -101,9 +101,13 @@ syscall_handler (struct intr_frame *f)
         case SYS_TELL:
         case SYS_CLOSE:
         {
+          if(check_user_args(f->esp + 4) == NULL)
+            thread_exit();
+
+          int fd = *(int *)(f->esp + 4);
           sys_close(fd);
-        }
           break;
+        }
 
     }
 }
