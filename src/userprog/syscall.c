@@ -151,7 +151,7 @@ bool
 sys_create (const char *file, unsigned initial_size)
 {
   if (check_user_args(file) == NULL)
-    thread_exit ();
+    exit(-1);
   bool ret;
   lock_acquire (&filesys_lock);
   ret = filesys_create(file, initial_size);
@@ -163,7 +163,7 @@ bool
 sys_remove (const char *file_name)
 {
   if (check_user_args(file_name) == NULL)
-    thread_exit ();
+    exit(-1);
   bool ret;
   lock_acquire (&filesys_lock);
   ret = filesys_remove(file_name);
