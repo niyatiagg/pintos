@@ -532,7 +532,7 @@ init_thread (struct thread *t, const char *name, int priority)
   list_init (&t->child_procs);
   t->waiting_lock = NULL;
   for (int i = 0; i < 128; i++) {
-    t->fd[i] = NULL;
+    t->file_d[i] = NULL;
   }
   t->fd_next = 3;
   old_level = intr_disable ();
