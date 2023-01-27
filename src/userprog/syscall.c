@@ -18,13 +18,13 @@ void halt (void);
 void exit (int status);
 pid_t exec (const char *file);
 void *check_user_args (const void *uaddr);
-static struct lock *filesys_lock;
+static struct lock filesys_lock;
 
 
 void
 syscall_init (void) 
 {
-  lock_init(&filesys_lock);
+  lock_init (&filesys_lock);
   intr_register_int (0x30, 3, INTR_ON, syscall_handler, "syscall");
 }
 
