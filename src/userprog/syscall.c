@@ -73,8 +73,10 @@ syscall_handler (struct intr_frame *f)
           if(check_user_args(f->esp + 4) == NULL)
             thread_exit();
 
+          int ret;
           char *file_name = (char *)(f->esp + 4);
-          sys_open(file_name);
+          ret = sys_open(file_name);
+          f->eax = ret;
           break;
         }
         case SYS_FILESIZE:
@@ -197,10 +199,17 @@ sys_open (const char *file_name)
 
   struct thread *t = thread_current ();
   lock_acquire (&filesys_lock);
-  t->file_d[t->fd_next++] = filesys_open (file_name);
+  t->file_d[t->fd_next] = filesys_open (file_name);
   lock_release (&filesys_lock);
 
-  return t->fd_next - 1;
+  if(t->file_d[t->fd_next] == NULL) {
+    return -1;
+  }
+  else {
+    t->fd_next++;
+    return t->fd_next - 1;
+  }
+
 }
 
 void
