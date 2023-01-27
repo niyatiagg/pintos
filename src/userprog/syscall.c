@@ -125,9 +125,9 @@ sys_write(int fd, void *buffer, unsigned size) {
         ret = size;
     } else {
         struct thread *t = thread_current ();
-        lock_acquire (filesys_lock);
+        lock_acquire (&filesys_lock);
         ret = file_write (t->file_d[fd], buffer, size);
-        lock_release (filesys_lock);
+        lock_release (&filesys_lock);
     }
     return ret;
 }
@@ -196,9 +196,9 @@ sys_open (const char *file_name)
     exit(-1);
 
   struct thread *t = thread_current ();
-  lock_acquire (filesys_lock);
+  lock_acquire (&filesys_lock);
   t->file_d[t->fd_next++] = filesys_open (file_name);
-  lock_release (filesys_lock);
+  lock_release (&filesys_lock);
 
   return t->fd_next - 1;
 }
