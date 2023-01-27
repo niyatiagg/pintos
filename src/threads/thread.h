@@ -106,13 +106,8 @@ struct thread
     struct semaphore *parent_sema;      /* reference for parent sema */
     struct semaphore wait_sema;         /* sema for waiting */
     int exit_status;
-    struct file_control_block
-    {
-      struct file *process_file;
-      int fd;
-      struct list_elem file_elem;
-    };
-    struct file_control_block *fd[60];   /* file descriptor table */
+    struct file *file_d[128];               /* file descriptor table */
+    int fd_next;
 #endif
 
     /* Owned by thread.c. */

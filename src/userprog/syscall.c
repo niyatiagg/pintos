@@ -12,11 +12,14 @@ static void syscall_handler (struct intr_frame *);
 int sys_write(int fd, void *buffer, unsigned size);
 bool sys_create (const char *file, unsigned initial_size);
 bool sys_remove (const char *file_name);
+int sys_open (const char *file_name);
+void sys_close (int fd);
 void halt (void);
 void exit (int status);
 pid_t exec (const char *file);
 void *check_user_args (const void *uaddr);
 static struct lock filesys_lock;
+
 
 void
 syscall_init (void) 
@@ -71,7 +74,7 @@ syscall_handler (struct intr_frame *f)
             thread_exit();
 
           char *file_name = (char *)(f->esp + 4);
-          //sys_open(file_name);
+          sys_open(file_name);
           break;
         }
         case SYS_FILESIZE:
@@ -96,7 +99,11 @@ syscall_handler (struct intr_frame *f)
         }
         case SYS_SEEK:
         case SYS_TELL:
-        case SYS_CLOSE:;
+        case SYS_CLOSE:
+        {
+          sys_close(fd);
+        }
+          break;
 
     }
 }
@@ -113,7 +120,10 @@ sys_write(int fd, void *buffer, unsigned size) {
         putbuf(buffer, size);
         ret = size;
     } else {
-        ret = -1;
+        struct thread *t = thread_current ();
+        lock_acquire (filesys_lock);
+        ret = file_write (t->file_d[fd], buffer, size);
+        lock_release (filesys_lock);
     }
     return ret;
 }
@@ -152,10 +162,12 @@ sys_create (const char *file, unsigned initial_size)
 {
   if (check_user_args(file) == NULL)
     exit(-1);
+
   bool ret;
   lock_acquire (&filesys_lock);
   ret = filesys_create(file, initial_size);
   lock_release (&filesys_lock);
+
   return ret;
 }
 
@@ -164,9 +176,32 @@ sys_remove (const char *file_name)
 {
   if (check_user_args(file_name) == NULL)
     exit(-1);
+
   bool ret;
   lock_acquire (&filesys_lock);
   ret = filesys_remove(file_name);
   lock_release (&filesys_lock);
+
   return ret;
 }
+
+int
+sys_open (const char *file_name)
+{
+  if (check_user_args(file_name) == NULL)
+    exit(-1);
+
+  struct thread *t = thread_current ();
+  lock_acquire (filesys_lock);
+  t->file_d[t->fd_next++] = filesys_open (file_name);
+  lock_release (filesys_lock);
+
+  return t->fd_next - 1;
+}
+
+void
+sys_close (int fd)
+{
+  file_close (thread_current ()->file_d[fd]);
+}
+
