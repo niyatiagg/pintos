@@ -197,19 +197,18 @@ sys_open (const char *file_name)
   if (check_user_args(file_name) == NULL)
     exit(-1);
 
+  int ans;
   struct thread *t = thread_current ();
   lock_acquire (&filesys_lock);
-  t->file_d[t->fd_next] = filesys_open (file_name);
+  struct file *f = filesys_open (file_name);
   lock_release (&filesys_lock);
-
-  if(t->file_d[t->fd_next] == NULL) {
+  if(f == NULL) {
     return -1;
   }
   else {
-    t->fd_next++;
+    t->file_d[t->fd_next++] = f;
     return t->fd_next - 1;
   }
-
 }
 
 void
