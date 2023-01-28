@@ -13,6 +13,9 @@ int sys_write(int fd, void *buffer, unsigned size);
 bool sys_create (const char *file, unsigned initial_size);
 bool sys_remove (const char *file_name);
 int sys_open (const char *file_name);
+int sys_filesize (int fd);
+void sys_seek (int fd, unsigned position);
+unsigned sys_tell (int fd);
 void sys_close (int fd);
 void halt (void);
 void exit (int status);
@@ -38,20 +41,27 @@ syscall_handler (struct intr_frame *f)
           halt ();
           break;
         }
-        case SYS_EXIT: exit(0); break;
+        case SYS_EXIT: {
+          exit(0);
+          break;
+        }
         case SYS_EXEC: {
           if(check_user_args(f->esp + 4) == NULL)
-            thread_exit();
+            exit (-1);
 
-          char *cname = (char *)(f->esp + 4);
-          exec(cname);
+          pid_t ret;
+          char *file_name;
+          memcpy(&file_name, f->esp + 4, sizeof(file_name));
+          ret = exec(file_name);
+          f->eax = ret;
+          break;
         }
         case SYS_WAIT:
         case SYS_CREATE: {
           bool ret;
           if(check_user_args(f->esp + 4) == NULL ||
               check_user_args(f->esp + 8) == NULL)
-            thread_exit();
+            exit (-1);
 
           char *file_name = *(char **)(f->esp + 4);
           unsigned initial_size = *(unsigned *)(f->esp + 8);
@@ -62,7 +72,7 @@ syscall_handler (struct intr_frame *f)
         case SYS_REMOVE: {
           bool ret;
           if(check_user_args(f->esp + 4) == NULL)
-            thread_exit();
+            exit (-1);
 
           char *file_name;
           memcpy(&file_name, f->esp + 4, sizeof(file_name));
@@ -72,7 +82,7 @@ syscall_handler (struct intr_frame *f)
         }
         case SYS_OPEN: {
           if(check_user_args(f->esp + 4) == NULL)
-            thread_exit();
+            exit (-1);
 
           int ret;
           char *file_name;
@@ -82,7 +92,33 @@ syscall_handler (struct intr_frame *f)
           break;
         }
         case SYS_FILESIZE:
+        {
+          if(check_user_args(f->esp + 4) == NULL)
+            exit (-1);
+
+          int fd = *(int *)(f->esp + 4);
+          f->eax = sys_filesize (fd);
+          break;
+        }
         case SYS_READ:
+        {
+          int fd, ret;
+          const void *buffer;
+          unsigned size;
+          if(check_user_args(f->esp + 4) == NULL ||
+             check_user_args(f->esp + 8) == NULL ||
+             check_user_args(f->esp + 12) == NULL)
+          {
+            exit (-1);
+          }
+
+          memcpy(&fd, f->esp + 4, sizeof(fd));
+          memcpy(&buffer, f->esp + 8, sizeof(buffer));
+          memcpy(&size, f->esp + 12, sizeof(size));
+          ret = sys_read(fd, buffer, size);
+          f->eax = (uint32_t) ret;
+          break;
+        }
         case SYS_WRITE: {
             int fd, ret;
             const void *buffer;
@@ -91,7 +127,7 @@ syscall_handler (struct intr_frame *f)
                 check_user_args(f->esp + 8) == NULL ||
                   check_user_args(f->esp + 12) == NULL)
             {
-                thread_exit();
+                exit (-1);
             }
 
             memcpy(&fd, f->esp + 4, sizeof(fd));
@@ -102,11 +138,29 @@ syscall_handler (struct intr_frame *f)
             break;
         }
         case SYS_SEEK:
+        {
+          if(check_user_args(f->esp + 4) == NULL ||
+              check_user_args(f->esp + 8) == NULL)
+            exit (-1);
+
+          int fd = *(int *)(f->esp + 4);
+          unsigned position = *(unsigned *)(f->esp + 8);
+          sys_seek (fd, position);
+          break;
+        }
         case SYS_TELL:
+        {
+          if(check_user_args(f->esp + 4) == NULL)
+            exit (-1);
+
+          int fd = *(int *)(f->esp + 4);
+          f->eax = sys_tell (fd);
+          break;
+        }
         case SYS_CLOSE:
         {
           if(check_user_args(f->esp + 4) == NULL)
-            thread_exit();
+            exit (-1);
 
           int fd = *(int *)(f->esp + 4);
           sys_close(fd);
@@ -117,22 +171,45 @@ syscall_handler (struct intr_frame *f)
 }
 
 int
+sys_read (int fd, void *buffer, unsigned size) {
+  int ret;
+  if(check_user_args(buffer) == NULL ||
+     check_user_args((buffer) + size-1 ) == NULL)
+  {
+    exit (-1);
+  }
+  if(fd == 0) { // read from keyboard
+    input_getc ();
+    ret = size;
+  } else if (fd < 128 && fd > 2){
+    struct thread *t = thread_current ();
+    lock_acquire (&filesys_lock);
+    ret = file_read (t->file_d[fd], buffer, size);
+    lock_release (&filesys_lock);
+  }
+  else exit(-1);
+  return ret;
+}
+
+int
 sys_write(int fd, void *buffer, unsigned size) {
     int ret;
     if(check_user_args(buffer) == NULL ||
-        check_user_args(((int *) buffer) + size-1 ) == NULL)
+        check_user_args((buffer) + size-1 ) == NULL)
     {
-        thread_exit ();
+        exit (-1);
     }
     if(fd == 1) { // write to stdout
         putbuf(buffer, size);
         ret = size;
-    } else {
+    } else if (fd < 128 && fd > 2)
+    {
         struct thread *t = thread_current ();
         lock_acquire (&filesys_lock);
         ret = file_write (t->file_d[fd], buffer, size);
         lock_release (&filesys_lock);
     }
+    else exit (-1);
     return ret;
 }
 
@@ -169,7 +246,7 @@ bool
 sys_create (const char *file, unsigned initial_size)
 {
   if (check_user_args(file) == NULL)
-    exit(-1);
+    exit (-1);
 
   bool ret;
   lock_acquire (&filesys_lock);
@@ -183,7 +260,7 @@ bool
 sys_remove (const char *file_name)
 {
   if (check_user_args(file_name) == NULL)
-    exit(-1);
+    exit (-1);
 
   bool ret;
   lock_acquire (&filesys_lock);
@@ -197,7 +274,7 @@ int
 sys_open (const char *file_name)
 {
   if (check_user_args(file_name) == NULL)
-    exit(-1);
+    exit (-1);
 
   struct thread *t = thread_current ();
   lock_acquire (&filesys_lock);
@@ -217,7 +294,25 @@ sys_close (int fd)
 {
   if (fd > 0 && fd < 128 && thread_current ()->file_d[fd] != NULL) {
     file_close (thread_current ()->file_d[fd]);
+    thread_current ()->file_d[fd] = NULL;
   }
-  else exit(-1);
+  else exit (-1);
 }
 
+int
+sys_filesize (int fd)
+{
+  return file_length (thread_current ()->file_d[fd]);
+}
+
+void
+sys_seek (int fd, unsigned position)
+{
+  file_seek (fd, position);
+}
+
+unsigned
+sys_tell (int fd)
+{
+  return file_tell (thread_current ()->file_d[fd]);
+}
