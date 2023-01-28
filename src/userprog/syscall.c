@@ -97,7 +97,7 @@ syscall_handler (struct intr_frame *f)
             thread_exit();
 
           int fd = *(int *)(f->esp + 4);
-          sys_filesize (fd);
+          f->eax = sys_filesize (fd);
           break;
         }
         case SYS_READ:
@@ -154,7 +154,7 @@ syscall_handler (struct intr_frame *f)
             thread_exit();
 
           int fd = *(int *)(f->esp + 4);
-          sys_tell (fd);
+          f->eax = sys_tell (fd);
           break;
         }
         case SYS_CLOSE:
