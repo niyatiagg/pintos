@@ -174,7 +174,7 @@ int
 sys_read (int fd, void *buffer, unsigned size) {
   int ret;
   if(check_user_args(buffer) == NULL ||
-     check_user_args(((int *) buffer) + size-1 ) == NULL)
+     check_user_args((buffer) + size-1 ) == NULL)
   {
     exit (-1);
   }
@@ -195,7 +195,7 @@ int
 sys_write(int fd, void *buffer, unsigned size) {
     int ret;
     if(check_user_args(buffer) == NULL ||
-        check_user_args(((int *) buffer) + size-1 ) == NULL)
+        check_user_args((buffer) + size-1 ) == NULL)
     {
         exit (-1);
     }
