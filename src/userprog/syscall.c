@@ -34,6 +34,8 @@ syscall_init (void)
 static void
 syscall_handler (struct intr_frame *f)
 {
+  if(check_user_args(f->esp) == NULL || check_user_args(f->esp+3) == NULL)
+    exit (-1);
     int number = *(int *)f->esp;
 
     switch(number) {
@@ -41,8 +43,13 @@ syscall_handler (struct intr_frame *f)
           halt ();
           break;
         }
-        case SYS_EXIT: {
-          exit(0);
+        case SYS_EXIT:
+        {
+          if(check_user_args(f->esp + 4) == NULL)
+            exit (-1);
+
+          int status = *(int *)(f->esp + 4);
+          exit(status);
           break;
         }
         case SYS_EXEC: {
@@ -226,20 +233,13 @@ exit (int status)
   thread_exit();
 }
 
-void *
-check_user_args (const void *uaddr)
-{
-  uint32_t *pd = active_pd ();
-  if(!is_user_vaddr (uaddr))
-      return NULL;
-
-  return pagedir_get_page(pd, uaddr);
-}
-
 pid_t
-exec (const char *file)
+exec (const char *file_name)
 {
-  return process_execute(file);
+  if (check_user_args(file_name) == NULL)
+    exit (-1);
+
+  return process_execute(file_name);
 }
 
 bool
@@ -293,7 +293,9 @@ void
 sys_close (int fd)
 {
   if (fd > 0 && fd < 128 && thread_current ()->file_d[fd] != NULL) {
+    lock_acquire (&filesys_lock);
     file_close (thread_current ()->file_d[fd]);
+    lock_release (&filesys_lock);
     thread_current ()->file_d[fd] = NULL;
   }
   else exit (-1);
@@ -308,11 +310,23 @@ sys_filesize (int fd)
 void
 sys_seek (int fd, unsigned position)
 {
-  file_seek (fd, position);
+  lock_acquire (&filesys_lock);
+  file_seek (thread_current ()->file_d[fd], position);
+  lock_release (&filesys_lock);
 }
 
 unsigned
 sys_tell (int fd)
 {
   return file_tell (thread_current ()->file_d[fd]);
+}
+
+void *
+check_user_args (const void *uaddr)
+{
+  uint32_t *pd = active_pd ();
+  if(!is_user_vaddr (uaddr))
+    return NULL;
+
+  return pagedir_get_page(pd, uaddr);
 }
