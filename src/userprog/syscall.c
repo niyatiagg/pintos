@@ -43,6 +43,9 @@ syscall_handler (struct intr_frame *f)
         }
         case SYS_EXIT:
         {
+          if(check_user_args(f->esp + 4) == NULL)
+            exit (-1);
+
           int status = *(int *)(f->esp + 4);
           exit(status);
           break;
