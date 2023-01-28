@@ -41,8 +41,10 @@ syscall_handler (struct intr_frame *f)
           halt ();
           break;
         }
-        case SYS_EXIT: {
-          exit(0);
+        case SYS_EXIT:
+        {
+          int status = *(int *)(f->esp + 4);
+          exit(status);
           break;
         }
         case SYS_EXEC: {
