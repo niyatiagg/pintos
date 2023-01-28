@@ -34,6 +34,8 @@ syscall_init (void)
 static void
 syscall_handler (struct intr_frame *f)
 {
+  if(check_user_args(f->esp + 4) == NULL)
+    exit (-1);
     int number = *(int *)f->esp;
 
     switch(number) {
@@ -242,9 +244,12 @@ check_user_args (const void *uaddr)
 }
 
 pid_t
-exec (const char *file)
+exec (const char *file_name)
 {
-  return process_execute(file);
+  if (check_user_args(file_name) == NULL)
+    exit (-1);
+
+  return process_execute(file_name);
 }
 
 bool
