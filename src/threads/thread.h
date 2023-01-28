@@ -101,11 +101,13 @@ struct thread
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
     uint32_t *pagedir;                  /* Page directory. */
-    struct list child_procs;        /* list of all direct children of this thread */
-    struct list_elem child_elem;
-    struct semaphore *parent_sema;
-    struct semaphore wait_sema;
+    struct list child_procs;            /* list of all direct children of this thread */
+    struct list_elem child_elem;        /* list element for child_procs list */
+    struct semaphore *parent_sema;      /* reference for parent sema */
+    struct semaphore wait_sema;         /* sema for waiting */
     int exit_status;
+    struct file *file_d[128];               /* file descriptor table */
+    int fd_next;
 #endif
 
     /* Owned by thread.c. */

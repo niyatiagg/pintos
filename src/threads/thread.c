@@ -531,6 +531,10 @@ init_thread (struct thread *t, const char *name, int priority)
   t->parent_sema = &thread_current ()->wait_sema;
   list_init (&t->child_procs);
   t->waiting_lock = NULL;
+  for (int i = 0; i < 128; i++) {
+    t->file_d[i] = NULL;
+  }
+  t->fd_next = 3;
   old_level = intr_disable ();
   list_push_back (&all_list, &t->allelem);
   intr_set_level (old_level);
