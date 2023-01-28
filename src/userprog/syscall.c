@@ -176,17 +176,18 @@ sys_read (int fd, void *buffer, unsigned size) {
   if(check_user_args(buffer) == NULL ||
      check_user_args(((int *) buffer) + size-1 ) == NULL)
   {
-    thread_exit ();
+    exit (-1);
   }
   if(fd == 0) { // read from keyboard
     input_getc ();
     ret = size;
-  } else {
+  } else if (fd < 128 && fd > 2){
     struct thread *t = thread_current ();
     lock_acquire (&filesys_lock);
     ret = file_read (t->file_d[fd], buffer, size);
     lock_release (&filesys_lock);
   }
+  else exit(-1);
   return ret;
 }
 
@@ -196,17 +197,19 @@ sys_write(int fd, void *buffer, unsigned size) {
     if(check_user_args(buffer) == NULL ||
         check_user_args(((int *) buffer) + size-1 ) == NULL)
     {
-        thread_exit ();
+        exit (-1);
     }
     if(fd == 1) { // write to stdout
         putbuf(buffer, size);
         ret = size;
-    } else {
+    } else if (fd < 128 && fd > 2)
+    {
         struct thread *t = thread_current ();
         lock_acquire (&filesys_lock);
         ret = file_write (t->file_d[fd], buffer, size);
         lock_release (&filesys_lock);
     }
+    else exit(-1);
     return ret;
 }
 
