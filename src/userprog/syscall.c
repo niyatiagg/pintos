@@ -64,7 +64,8 @@ syscall_handler (struct intr_frame *f)
           if(check_user_args(f->esp + 4) == NULL)
             thread_exit();
 
-          char *file_name = (char *)(f->esp + 4);
+          char *file_name;
+          memcpy(&file_name, f->esp + 4, sizeof(file_name));
           ret = sys_remove(file_name);
           f->eax = ret;
           break;
@@ -74,7 +75,8 @@ syscall_handler (struct intr_frame *f)
             thread_exit();
 
           int ret;
-          char *file_name = (char *)(f->esp + 4);
+          char *file_name;
+          memcpy(&file_name, f->esp + 4, sizeof(file_name));
           ret = sys_open(file_name);
           f->eax = ret;
           break;
@@ -197,7 +199,6 @@ sys_open (const char *file_name)
   if (check_user_args(file_name) == NULL)
     exit(-1);
 
-  int ans;
   struct thread *t = thread_current ();
   lock_acquire (&filesys_lock);
   struct file *f = filesys_open (file_name);
