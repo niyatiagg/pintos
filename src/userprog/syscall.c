@@ -34,7 +34,7 @@ syscall_init (void)
 static void
 syscall_handler (struct intr_frame *f)
 {
-  if(check_user_args(f->esp + 4) == NULL)
+  if(check_user_args(f->esp) == NULL)
     exit (-1);
     int number = *(int *)f->esp;
 
