@@ -34,7 +34,7 @@ syscall_init (void)
 static void
 syscall_handler (struct intr_frame *f)
 {
-  if(check_user_args(f->esp) == NULL)
+  if(check_user_args(f->esp) == NULL || check_user_args(f->esp+3))
     exit (-1);
     int number = *(int *)f->esp;
 
@@ -318,7 +318,7 @@ sys_filesize (int fd)
 void
 sys_seek (int fd, unsigned position)
 {
-  file_seek (fd, position);
+  file_seek (thread_current ()->file_d[fd], position);
 }
 
 unsigned
