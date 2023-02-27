@@ -101,8 +101,8 @@ start_process (void *pcb_)
     thread_exit ();
 
   // include code segment here.
-  pcb->pid = success ? (pid_t) t->tid : PID_ERROR;
-  t->pcb = pcb;
+  pcb->pid = success ? (pid_t) thread_current ()->tid : PID_ERROR;
+  thread_current ()->pcb = pcb;
   /* Start the user process by simulating a return from an
      interrupt, implemented by intr_exit (in
      threads/intr-stubs.S).  Because intr_exit takes all of its
