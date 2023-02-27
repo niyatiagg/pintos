@@ -527,14 +527,15 @@ init_thread (struct thread *t, const char *name, int priority)
   t->old_priority = priority;
   t->magic = THREAD_MAGIC;
   list_init (&t->acquired_locks);
-  sema_init(&t->wait_sema, 0);
-  t->parent_sema = &thread_current ()->wait_sema;
+#ifdef USERPROG
   list_init (&t->child_procs);
-  t->waiting_lock = NULL;
+  t->pcb = NULL;
   for (int i = 0; i < 128; i++) {
     t->file_d[i] = NULL;
   }
   t->fd_next = 3;
+#endif
+  t->waiting_lock = NULL;
   old_level = intr_disable ();
   list_push_back (&all_list, &t->allelem);
   intr_set_level (old_level);
@@ -676,15 +677,4 @@ wakeup_compare (const struct list_elem *a_, const struct list_elem *b_,
     return t1->wakeup_time < t2->wakeup_time;
 }
 
-struct thread *give_thread (int tid) {
-  struct list_elem *e;
-  for (e = list_begin(&all_list); e != list_end(&all_list);
-       e = list_next(e)) {
-    struct thread *t = list_entry(e, struct thread, elem);
-    if (t->tid == tid)
-      return t;
-  }
-
-  return thread_current();
-}
 

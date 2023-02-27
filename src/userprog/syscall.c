@@ -18,6 +18,7 @@ void sys_seek (int fd, unsigned position);
 unsigned sys_tell (int fd);
 void sys_close (int fd);
 void halt (void);
+int sys_wait (pid_t pid);
 void exit (int status);
 pid_t exec (const char *file);
 void *check_user_args (const void *uaddr);
@@ -57,13 +58,21 @@ syscall_handler (struct intr_frame *f)
             exit (-1);
 
           pid_t ret;
-          char *file_name;
-          memcpy(&file_name, f->esp + 4, sizeof(file_name));
-          ret = exec(file_name);
+          void *cmd_line;
+          memcpy(&cmd_line, f->esp + 4, sizeof(cmd_line));
+          ret = exec((const char*) cmd_line);
           f->eax = ret;
           break;
         }
-        case SYS_WAIT:
+        case SYS_WAIT: {
+          if(check_user_args(f->esp + 4) == NULL)
+            exit (-1);
+
+          pid_t pid = *(int *)(f->esp + 4);
+          int ret = sys_wait (pid);
+          f->eax = ret;
+          break;
+        }
         case SYS_CREATE: {
           bool ret;
           if(check_user_args(f->esp + 4) == NULL ||
@@ -72,6 +81,7 @@ syscall_handler (struct intr_frame *f)
 
           char *file_name = *(char **)(f->esp + 4);
           unsigned initial_size = *(unsigned *)(f->esp + 8);
+          // memcpy(&file_name, f->esp+4, sizeof(file_name));
           ret = sys_create(file_name, initial_size);
           f->eax = ret;
           break;
@@ -231,17 +241,26 @@ exit (int status)
 {
   printf("%s: exit(%d)\n", thread_current ()->name, status);
   thread_exit();
+
 }
 
 pid_t
-exec (const char *file_name)
+exec (const char *cmd_line)
 {
-  if (check_user_args(file_name) == NULL)
+  if (check_user_args(cmd_line) == NULL)
     exit (-1);
 
-  return process_execute(file_name);
+  lock_acquire (&filesys_lock);
+  pid_t ppid = process_execute(cmd_line);
+  lock_release (&filesys_lock);
+  return ppid;
 }
 
+int
+sys_wait (pid_t pid)
+{
+  return process_wait (pid);
+}
 bool
 sys_create (const char *file, unsigned initial_size)
 {

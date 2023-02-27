@@ -3,16 +3,21 @@
 
 #include "threads/thread.h"
 typedef int pid_t;
+typedef int tid_t;
 #define PID_ERROR ((pid_t) -1)
 
-//struct pcb {
-//    tid_t tid;                          /* Thread identifier. */
-//  struct list_elem child_elem;        /* List element for children list. */
-//    bool exited;                        /* Whether it has exited */
-//    bool waited;                        /* Whether it has waited for some child. */
-//    struct semaphore sema;         /* Wait semaphore. */
-//    int exit_status;                    /* Status when it exits. */
-//};
+struct p_c_b {
+  pid_t pid;                          /* Process identifier. */
+  struct list_elem child_elem;        /* List element for children list. */
+  const char* file_name_copy;
+  struct thread *parent;              /* Parent of the current thread */
+  bool exited;                        /* Whether it has exited */
+  bool waiting;                       /* Whether parent is waiting for its child. */
+  bool orphaned;                      /* Whether parent alive or not */
+  struct semaphore wait_sema;         /* Wait semaphore. */
+  struct semaphore initialize_sema;   /* To block the parent so that doesn't run before child process runs */
+  int exit_status;                    /* Status when it exits. */
+};
 
 tid_t process_execute (const char *file_name);
 int process_wait (tid_t);
