@@ -32,29 +32,48 @@ process_execute (const char *file_name)
   char *fn_copy;
   tid_t tid;
   char *save_ptr;
+  struct p_c_b *pcb;
   /* Make a copy of FILE_NAME.
      Otherwise there's a race between the caller and load(). */
   fn_copy = palloc_get_page (0);
+
   if (fn_copy == NULL)
     return TID_ERROR;
   strlcpy (fn_copy, file_name, PGSIZE);
   file_name = strtok_r((char *) file_name, " ", &save_ptr);
+
+  pcb = palloc_get_page (0);
+  if (pcb == NULL)
+    return TID_ERROR;
+
+  pcb->pid = -10;
+  pcb->parent = thread_current ();
+  pcb->file_name_copy = fn_copy;
+  pcb->exited = false;
+  pcb->waiting = false;
+  pcb->orphaned = false;
+  pcb->exit_status = -1; // not defined
+
+  sema_init (&pcb->wait_sema, 0);
   /* Create a new thread to execute FILE_NAME. */
-  tid = thread_create (file_name, PRI_DEFAULT, start_process, fn_copy);
+  tid = thread_create (file_name, PRI_DEFAULT, start_process, pcb);
   if (tid == TID_ERROR)
     palloc_free_page (fn_copy);
 
-  struct thread *t = give_thread(tid);
-  list_push_back(&thread_current ()->child_procs, &t->child_elem);
+  if(pcb->pid >= 0) {
+    list_push_back(&(thread_current ()->child_procs), &(pcb->child_elem));
+  }
+
   return tid;
 }
 
 /* A thread function that loads a user process and starts it
    running. */
 static void
-start_process (void *file_name_)
+start_process (void *pcb_)
 {
-  char *file_name = file_name_;
+  struct p_c_b *pcb = pcb_;
+  char *file_name = pcb->file_name_copy;
   struct intr_frame if_;
   bool success;
   char* temp[50];
@@ -80,7 +99,10 @@ start_process (void *file_name_)
   palloc_free_page (file_name);
   if (!success) 
     thread_exit ();
+
   // include code segment here.
+  pcb->pid = success ? (pid_t) t->tid : PID_ERROR;
+  t->pcb = pcb;
   /* Start the user process by simulating a return from an
      interrupt, implemented by intr_exit (in
      threads/intr-stubs.S).  Because intr_exit takes all of its
@@ -141,22 +163,35 @@ argument_parser (char** temp, int count, void **esp)
    does nothing. */
 int
 process_wait (tid_t child_tid) {
-  /* if (child_tid == -1)
-    return -1;
+  struct thread *t = thread_current();
+  struct list *child_list = &(t->child_procs);
+  struct p_c_b *child_pcb = NULL;
+  struct list_elem *e = NULL;
+  if (!list_empty(&child_list)) {
+    for (e = list_begin(&child_list); e != list_end(&child_list);
+         e = list_next(e)) {
+      child_pcb = list_entry(e,
+      struct p_c_b, elem);
+    }
+    if (child_pcb == NULL)
+      return -1;
 
-  else if ()
-  */
-//  struct list_elem *e;
-//  for (e = list_begin(&thread_current()->child_procs); e != list_end(&thread_current()->child_procs);
-//       e = list_next(e)) {
-//    struct thread *t = list_entry(e, struct thread, elem);
-//    if (t->tid == child_tid) {
-//      sema_down(&t->wait_sema);
-//      break;
-//    }
-//  }
-  sema_down(&thread_current ()->wait_sema);
-  return 0;
+    if (child_pcb->waiting) {
+      return -1;
+    } else child_pcb->waiting = true;
+
+    if (!child_pcb->exited)
+      sema_down (&(child_pcb->wait_sema));
+
+    ASSERT (child_pcb->exited == true);
+    ASSERT (e != NULL);
+    list_remove (e);
+
+    int retcode = child_pcb->exit_status;
+
+    palloc_free_page (child_pcb);
+    return retcode;
+  }
 }
 
 /* Free the current process's resources. */
@@ -165,6 +200,26 @@ process_exit (void)
 {
   struct thread *cur = thread_current ();
   uint32_t *pd;
+
+  struct list *child_list = &(cur->child_procs);
+  while (!list_empty (child_list)) {
+    struct list_elem *e = list_pop_front (child_list);
+    struct p_c_b *child_pcb;
+    child_pcb = list_entry (e, struct p_c_b, elem);
+    if (child_pcb->exited) {
+      palloc_free_page (child_pcb);
+    }
+    else {
+      child_pcb->orphaned = true;
+      child_pcb->parent = NULL;
+    }
+
+    cur->pcb->exited = true;
+    sema_up (& (cur->pcb->wait_sema));
+
+    if(cur->pcb->orphan)
+      palloc_free_page (&cur-pcb);
+  }
 
   /* Destroy the current process's page directory and switch back
      to the kernel-only page directory. */

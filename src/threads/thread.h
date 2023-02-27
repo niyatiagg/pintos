@@ -5,6 +5,8 @@
 #include <list.h>
 #include <stdint.h>
 #include "threads/synch.h"
+#include "userprog/process.h"
+
 
 /* States in a thread's life cycle. */
 enum thread_status
@@ -102,11 +104,8 @@ struct thread
     /* Owned by userprog/process.c. */
     uint32_t *pagedir;                  /* Page directory. */
     struct list child_procs;            /* list of all direct children of this thread */
-    struct list_elem child_elem;        /* list element for child_procs list */
-    struct semaphore *parent_sema;      /* reference for parent sema */
-    struct semaphore wait_sema;         /* sema for waiting */
-    int exit_status;
-    struct file *file_d[128];               /* file descriptor table */
+    struct p_c_b *pcb;                  /* Process control block */
+    struct file *file_d[128];           /* file descriptor table */
     int fd_next;
 #endif
 
