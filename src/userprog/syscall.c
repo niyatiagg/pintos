@@ -79,7 +79,7 @@ syscall_handler (struct intr_frame *f)
               check_user_args(f->esp + 8) == NULL)
             exit (-1);
 
-          char *file_name = *(char **)(f->esp + 4));
+          char *file_name = *(char **)(f->esp + 4);
           unsigned initial_size = *(unsigned *)(f->esp + 8);
           // memcpy(&file_name, f->esp+4, sizeof(file_name));
           ret = sys_create(file_name, initial_size);
