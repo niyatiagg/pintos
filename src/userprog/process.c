@@ -170,14 +170,24 @@ process_wait (tid_t child_tid) {
   if (!list_empty(child_list)) {
     for (e = list_begin(child_list); e != list_end(child_list);
          e = list_next(e)) {
-      child_pcb = list_entry(e, struct p_c_b, child_elem);
+      struct p_c_b *pcb = list_entry(e,
+      struct p_c_b, child_elem);
+
+      if (pcb->pid == child_tid) {
+        child_pcb = pcb;
+        break;
+      }
     }
+  }
     if (child_pcb == NULL)
       return -1;
 
     if (child_pcb->waiting) {
       return -1;
-    } else child_pcb->waiting = true;
+    }
+    else {
+      child_pcb->waiting = true;
+    }
 
     if (!child_pcb->exited)
       sema_down (&(child_pcb->wait_sema));
@@ -191,7 +201,7 @@ process_wait (tid_t child_tid) {
     palloc_free_page (child_pcb);
     return retcode;
   }
-}
+
 
 /* Free the current process's resources. */
 void
@@ -208,7 +218,8 @@ process_exit (void)
     child_pcb = list_entry(e, struct p_c_b, child_elem);
     if (child_pcb->exited) {
       palloc_free_page(child_pcb);
-    } else {
+    }
+    else {
       child_pcb->orphaned = true;
       child_pcb->parent = NULL;
     }
@@ -217,7 +228,7 @@ process_exit (void)
     sema_up (& (cur->pcb->wait_sema));
 
     if(cur->pcb->orphaned)
-      palloc_free_page (&cur->pcb);
+      palloc_free_page (&(cur->pcb));
 
   /* Destroy the current process's page directory and switch back
      to the kernel-only page directory. */
