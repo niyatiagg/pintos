@@ -247,7 +247,7 @@ exit (int status)
 pid_t
 exec (const char *cmd_line)
 {
-  if (check_user_args(file_name) == NULL)
+  if (check_user_args(cmd_line) == NULL)
     exit (-1);
 
   lock_acquire (&filesys_lock);
