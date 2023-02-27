@@ -217,8 +217,8 @@ process_exit (void)
     cur->pcb->exited = true;
     sema_up (& (cur->pcb->wait_sema));
 
-    if(cur->pcb->orphan)
-      palloc_free_page (&cur-pcb);
+    if(cur->pcb->orphaned)
+      palloc_free_page (&cur->pcb);
   }
 
   /* Destroy the current process's page directory and switch back
@@ -237,7 +237,6 @@ process_exit (void)
       pagedir_activate (NULL);
       pagedir_destroy (pd);
     }
-  sema_up(thread_current ()->parent_sema);
   //printing process's name(just the program name and not its arguments)
   // and exit id before it exits
 
