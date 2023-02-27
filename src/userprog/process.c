@@ -168,7 +168,7 @@ process_wait (tid_t child_tid) {
   struct p_c_b *child_pcb = NULL;
   struct list_elem *e = NULL;
   if (!list_empty(&child_list)) {
-    for (e = list_begin(&child_list); e != list_end(&child_list);
+    for (e = list_begin(child_list); e != list_end(child_list);
          e = list_next(e)) {
       child_pcb = list_entry(e, struct p_c_b, child_elem);
     }
