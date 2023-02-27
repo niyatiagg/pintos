@@ -54,12 +54,15 @@ process_execute (const char *file_name)
   pcb->orphaned = false;
   pcb->exit_status = -1; // not defined
 
-  sema_init (&pcb->wait_sema, 0);
+  sema_init (&(pcb->wait_sema), 0);
+  sema_init (&(pcb->initialize_sema), 0);
   /* Create a new thread to execute FILE_NAME. */
   tid = thread_create (file_name, PRI_DEFAULT, start_process, pcb);
   if (tid == TID_ERROR)
     palloc_free_page (fn_copy);
 
+  // wait for the child process to complete start_process
+  sema_down (& (pcb->initialize_sema));
   if(pcb->pid >= 0) {
     list_push_back(&(thread_current ()->child_procs), &(pcb->child_elem));
   }
@@ -109,6 +112,9 @@ start_process (void *pcb_)
      arguments on the stack in the form of a `struct intr_frame',
      we just point the stack pointer (%esp) to our stack frame
      and jump to it. */
+
+  // since initialization is complete, we can wake the parent process.
+  sema_up (& (pcb->initialize_sema));
   asm volatile ("movl %0, %%esp; jmp intr_exit" : : "g" (&if_) : "memory");
   NOT_REACHED ();
 }
@@ -170,8 +176,7 @@ process_wait (tid_t child_tid) {
   if (!list_empty(child_list)) {
     for (e = list_begin(child_list); e != list_end(child_list);
          e = list_next(e)) {
-      struct p_c_b *pcb = list_entry(e,
-      struct p_c_b, child_elem);
+      struct p_c_b *pcb = list_entry(e, struct p_c_b, child_elem);
 
       if (pcb->pid == child_tid) {
         child_pcb = pcb;

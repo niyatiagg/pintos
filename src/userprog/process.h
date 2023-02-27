@@ -15,6 +15,7 @@ struct p_c_b {
   bool waiting;                       /* Whether parent is waiting for its child. */
   bool orphaned;                      /* Whether parent alive or not */
   struct semaphore wait_sema;         /* Wait semaphore. */
+  struct semaphore initialize_sema;   /* To block the parent so that doesn't run before child process runs */
   int exit_status;                    /* Status when it exits. */
 };
 
