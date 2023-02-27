@@ -167,7 +167,7 @@ process_wait (tid_t child_tid) {
   struct list *child_list = &(t->child_procs);
   struct p_c_b *child_pcb = NULL;
   struct list_elem *e = NULL;
-  if (!list_empty(&child_list)) {
+  if (!list_empty(child_list)) {
     for (e = list_begin(child_list); e != list_end(child_list);
          e = list_next(e)) {
       child_pcb = list_entry(e, struct p_c_b, child_elem);
@@ -201,24 +201,23 @@ process_exit (void)
   uint32_t *pd;
 
   struct list *child_list = &(cur->child_procs);
+  struct list_elem *e;
   while (!list_empty (child_list)) {
-    struct list_elem *e = list_pop_front (child_list);
+    e = list_pop_front(child_list);
     struct p_c_b *child_pcb;
-    child_pcb = list_entry (e, struct p_c_b, child_elem);
+    child_pcb = list_entry(e, struct p_c_b, child_elem);
     if (child_pcb->exited) {
-      palloc_free_page (child_pcb);
-    }
-    else {
+      palloc_free_page(child_pcb);
+    } else {
       child_pcb->orphaned = true;
       child_pcb->parent = NULL;
     }
-
+  }
     cur->pcb->exited = true;
     sema_up (& (cur->pcb->wait_sema));
 
     if(cur->pcb->orphaned)
       palloc_free_page (&cur->pcb);
-  }
 
   /* Destroy the current process's page directory and switch back
      to the kernel-only page directory. */
