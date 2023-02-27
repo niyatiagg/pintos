@@ -170,8 +170,7 @@ process_wait (tid_t child_tid) {
   if (!list_empty(&child_list)) {
     for (e = list_begin(&child_list); e != list_end(&child_list);
          e = list_next(e)) {
-      child_pcb = list_entry(e,
-      struct p_c_b, elem);
+      child_pcb = list_entry(e, struct p_c_b, child_elem);
     }
     if (child_pcb == NULL)
       return -1;
@@ -205,7 +204,7 @@ process_exit (void)
   while (!list_empty (child_list)) {
     struct list_elem *e = list_pop_front (child_list);
     struct p_c_b *child_pcb;
-    child_pcb = list_entry (e, struct p_c_b, elem);
+    child_pcb = list_entry (e, struct p_c_b, child_elem);
     if (child_pcb->exited) {
       palloc_free_page (child_pcb);
     }
