@@ -247,9 +247,13 @@ exit (int status)
 pid_t
 sys_exec (const char *cmd_line)
 {
-  if (check_user_args(cmd_line) == NULL)
-    exit (-1);
+  char *add_cmd = cmd_line;
+  while(*add_cmd != '\0') {
+    if (check_user_args(add_cmd) == NULL)
+      exit (-1);
 
+    add_cmd++;
+  }
   lock_acquire (&filesys_lock);
   pid_t ppid = process_execute(cmd_line);
   lock_release (&filesys_lock);
