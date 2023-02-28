@@ -20,7 +20,7 @@ void sys_close (int fd);
 void halt (void);
 int sys_wait (pid_t pid);
 void exit (int status);
-pid_t exec (const char *file);
+pid_t sys_exec (const char *file);
 void *check_user_args (const void *uaddr);
 static struct lock filesys_lock;
 
@@ -54,13 +54,13 @@ syscall_handler (struct intr_frame *f)
           break;
         }
         case SYS_EXEC: {
-          if(check_user_args(f->esp + 4) == NULL)
+          if(check_user_args(f->esp + 4) == NULL || check_user_args(f->esp+7) == NULL)
             exit (-1);
 
           pid_t ret;
           void *cmd_line;
           memcpy(&cmd_line, f->esp + 4, sizeof(cmd_line));
-          ret = exec((const char*) cmd_line);
+          ret = sys_exec((const char*) cmd_line);
           f->eax = ret;
           break;
         }
@@ -240,16 +240,18 @@ void
 exit (int status)
 {
   printf("%s: exit(%d)\n", thread_current ()->name, status);
+  thread_current ()->pcb->exit_status = status;
   thread_exit();
-
 }
 
 pid_t
-exec (const char *cmd_line)
+sys_exec (const char *cmd_line)
 {
-  if (check_user_args(cmd_line) == NULL)
-    exit (-1);
-
+  char *add_cmd = cmd_line;
+   do {
+    if (check_user_args(add_cmd) == NULL)
+      exit (-1);
+  } while(*add_cmd++ != '\0');
   lock_acquire (&filesys_lock);
   pid_t ppid = process_execute(cmd_line);
   lock_release (&filesys_lock);

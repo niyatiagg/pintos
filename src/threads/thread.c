@@ -534,6 +534,7 @@ init_thread (struct thread *t, const char *name, int priority)
     t->file_d[i] = NULL;
   }
   t->fd_next = 3;
+  t->exe_file = NULL;
 #endif
   t->waiting_lock = NULL;
   old_level = intr_disable ();
