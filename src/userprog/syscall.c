@@ -54,7 +54,7 @@ syscall_handler (struct intr_frame *f)
           break;
         }
         case SYS_EXEC: {
-          if(check_user_args(f->esp + 4) == NULL)
+          if(check_user_args(f->esp + 4) == NULL || check_user_args(f->esp+7) == NULL)
             exit (-1);
 
           pid_t ret;
