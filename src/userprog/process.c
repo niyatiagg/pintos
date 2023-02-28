@@ -50,7 +50,7 @@ process_execute (const char *cmd_line)
   file_name = strtok_r((char *) file_name, " ", &save_ptr);
 
   struct inode *inode = NULL;
-  if(!lookup (dir_open_root (), file_name, &inode)) {
+  if(!dir_lookup (dir_open_root (), file_name, &inode)) {
     return -1;
   }
   pcb = palloc_get_page (0);
