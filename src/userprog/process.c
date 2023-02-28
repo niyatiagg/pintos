@@ -226,6 +226,14 @@ process_exit (void)
   struct thread *cur = thread_current ();
   uint32_t *pd;
 
+  // free memory acquired by open files
+  for (int i=3; i<128; i++) {
+    if(cur->file_d[i] != NULL) {
+      struct file *to_be_closed = cur->file_d[i];
+      file_close (to_be_closed);
+    }
+  }
+  // free unnecessary memory acquired by children
   struct list *child_list = &(cur->child_procs);
   struct list_elem *e;
   while (!list_empty (child_list)) {
