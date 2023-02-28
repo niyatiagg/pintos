@@ -107,6 +107,7 @@ struct thread
     struct p_c_b *pcb;                  /* Process control block */
     struct file *file_d[128];           /* file descriptor table */
     int fd_next;
+    struct file *exe_file;
 #endif
 
     /* Owned by thread.c. */
