@@ -241,7 +241,6 @@ exit (int status)
 {
   printf("%s: exit(%d)\n", thread_current ()->name, status);
   thread_exit();
-
 }
 
 pid_t
@@ -251,9 +250,7 @@ sys_exec (const char *cmd_line)
    do {
     if (check_user_args(add_cmd) == NULL)
       exit (-1);
-
-    add_cmd++;
-  } while(*add_cmd != '\0');
+  } while(*add_cmd++ != '\0');
   lock_acquire (&filesys_lock);
   pid_t ppid = process_execute(cmd_line);
   lock_release (&filesys_lock);
