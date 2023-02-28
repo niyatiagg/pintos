@@ -49,6 +49,10 @@ process_execute (const char *cmd_line)
   strlcpy (file_name, cmd_line, PGSIZE);
   file_name = strtok_r((char *) file_name, " ", &save_ptr);
 
+  struct inode *inode = NULL;
+  if(!lookup (dir_open_root (), file_name, &inode)) {
+    return -1;
+  }
   pcb = palloc_get_page (0);
   if (pcb == NULL)
     return TID_ERROR;
