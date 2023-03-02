@@ -40,8 +40,6 @@ static struct thread *initial_thread;
 /* Lock used by allocate_tid(). */
 static struct lock tid_lock;
 
-static struct lock sleep_lock;
-
 
 
 /* Stack frame for kernel_thread(). */
@@ -99,7 +97,6 @@ thread_init (void)
   ASSERT (intr_get_level () == INTR_OFF);
 
   lock_init (&tid_lock);
-  lock_init (&sleep_lock);
   list_init (&ready_list);
   list_init (&sleep_list);
   list_init (&all_list);
@@ -149,6 +146,8 @@ thread_tick (void)
   if (++thread_ticks >= TIME_SLICE)
     intr_yield_on_return ();
 
+  /* checking after every tick if a thread's (there can be multiple threads)sleep
+     ticks have elapsed */
   struct list_elem *e;
   e = list_begin (&sleep_list);
   while ( e != list_end (&sleep_list))
@@ -282,9 +281,7 @@ thread_sleep (int64_t ticks)
     ASSERT (!intr_context ());
     ASSERT (intr_get_level () == INTR_OFF);
     thread_current ()->wakeup_time = ticks;
-    lock_acquire (&sleep_lock);
     list_insert_ordered (&sleep_list, &thread_current ()->elem, wakeup_compare, NULL);
-    lock_release (&sleep_lock);
     thread_block();
 }
 
@@ -392,6 +389,7 @@ thread_set_priority (int new_priority)
   }
 }
 
+// Resetting the priority of the current thread after priority donation is complete
 void
 thread_reset_priority(int priority) {
   int old_pri = thread_current ()->priority;

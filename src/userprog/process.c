@@ -78,6 +78,7 @@ process_execute (const char *cmd_line)
     list_push_back(&(thread_current ()->child_procs), &(pcb->child_elem));
   }
 
+  palloc_free_page (file_name);
   return tid;
 }
 

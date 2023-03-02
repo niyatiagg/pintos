@@ -97,8 +97,8 @@ struct thread
     struct list_elem elem;              /* List element. */
     int64_t sleep_ticks;                /* sleep time */
     int64_t wakeup_time;                /* absolute time since booting of OS */
-    struct list acquired_locks;         /* list of lock elems that led to priority
-                                            donation to the current thread */
+    struct list acquired_locks;         /* list of lock elems which
+                                           the current thread has acquired */
     struct lock *waiting_lock;          /* Reference to the lock on which the current thread waits on */
 #ifdef USERPROG
     /* Owned by userprog/process.c. */

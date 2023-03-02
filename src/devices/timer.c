@@ -89,6 +89,21 @@ timer_elapsed (int64_t then)
 void
 timer_sleep (int64_t ticks) 
 {
+  /* THE ABSOLUTE APPROACH : where t refers to the total timer ticks after ticks time
+     has elapsed. This approach takes O(n) for insertion in the sleep list but removing
+     from the list is O(1) (amortised).
+
+     THE RELATIVE APPROACH : where t refers to the ticks for which a thread sleeps.
+     Insertion takes O(1) time but with each tick we decrease the ticks of each thread
+     in the list by 1. This implies that atleast O(n) work is done per tick. Same cannot
+     be said for the absolute approach which just checks the first element (and subsequent
+     elements if necessary).
+
+     So, theoretically speaking, it cannot be said which one is a better approach.
+
+   * Here interrupts are disabled until thread is put in the blocked state in a sleep
+     list to avoid race conditions as thread_tick and thread_sleep both work on the sleep
+     list */
     if(ticks > 0) {
         enum intr_level old_level;
         int64_t t = timer_ticks () + ticks;
