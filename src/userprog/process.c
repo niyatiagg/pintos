@@ -44,8 +44,10 @@ process_execute (const char *cmd_line)
   strlcpy (cmd_copy, cmd_line, PGSIZE);
 
   file_name = palloc_get_page (0);
-  if (file_name == NULL)
+  if (file_name == NULL) {
+    palloc_free_page (cmd_copy);
     return TID_ERROR;
+  }
   strlcpy (file_name, cmd_line, PGSIZE);
   file_name = strtok_r((char *) file_name, " ", &save_ptr);
 
@@ -54,8 +56,11 @@ process_execute (const char *cmd_line)
     return -1;
   }
   pcb = palloc_get_page (0);
-  if (pcb == NULL)
+  if (pcb == NULL) {
+    palloc_free_page (cmd_copy);
+    palloc_free_page (file_name);
     return TID_ERROR;
+  }
 
   pcb->pid = -10;
   pcb->parent = thread_current ();
@@ -69,8 +74,12 @@ process_execute (const char *cmd_line)
   sema_init (&(pcb->initialize_sema), 0);
   /* Create a new thread to execute FILE_NAME. */
   tid = thread_create (file_name, PRI_DEFAULT, start_process, pcb);
-  if (tid == TID_ERROR)
+  if (tid == TID_ERROR) {
     palloc_free_page (cmd_copy);
+    palloc_free_page (file_name);
+    palloc_free_page (pcb);
+    return TID_ERROR;
+  }
 
   // wait for the child process to complete start_process
   sema_down (& (pcb->initialize_sema));
@@ -78,7 +87,6 @@ process_execute (const char *cmd_line)
     list_push_back(&(thread_current ()->child_procs), &(pcb->child_elem));
   }
 
-  palloc_free_page (file_name);
   return tid;
 }
 
@@ -227,13 +235,6 @@ process_exit (void)
   struct thread *cur = thread_current ();
   uint32_t *pd;
 
-  // free memory acquired by open files
-  for (int i=3; i<128; i++) {
-    if(cur->file_d[i] != NULL) {
-      struct file *to_be_closed = cur->file_d[i];
-      file_close (to_be_closed);
-    }
-  }
   // free unnecessary memory acquired by children
   struct list *child_list = &(cur->child_procs);
   struct list_elem *e;
@@ -253,7 +254,7 @@ process_exit (void)
     sema_up (& (cur->pcb->wait_sema));
 
     if(cur->pcb->orphaned)
-      palloc_free_page (&(cur->pcb));
+      palloc_free_page (cur->pcb);
 
   file_close (cur->exe_file);
 
