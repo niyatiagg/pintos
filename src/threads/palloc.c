@@ -32,6 +32,8 @@ struct pool
     struct bitmap *used_map;            /* Bitmap of free pages. */
     uint8_t *base;                      /* Base of pool. */
   };
+size_t count_of_free_pages_kernel;
+size_t count_of_free_pages_user;
 
 /* Two pools: one for kernel data, one for user pages. */
 static struct pool kernel_pool, user_pool;
@@ -54,7 +56,8 @@ palloc_init (size_t user_page_limit)
   if (user_pages > user_page_limit)
     user_pages = user_page_limit;
   kernel_pages = free_pages - user_pages;
-
+  count_of_free_pages_user = user_pages;
+  count_of_free_pages_kernel = kernel_pages;
   /* Give half of memory to kernel, half to user. */
   init_pool (&kernel_pool, free_start, kernel_pages, "kernel pool");
   init_pool (&user_pool, free_start + kernel_pages * PGSIZE,
@@ -79,6 +82,11 @@ palloc_get_multiple (enum palloc_flags flags, size_t page_cnt)
 
   lock_acquire (&pool->lock);
   page_idx = bitmap_scan_and_flip (pool->used_map, 0, page_cnt, false);
+  if (flags & PAL_USER) {
+    count_of_free_pages_user -= page_cnt;
+  } else {
+    count_of_free_pages_kernel -= page_cnt;
+  }
   lock_release (&pool->lock);
 
   if (page_idx != BITMAP_ERROR)
@@ -131,6 +139,14 @@ palloc_free_multiple (void *pages, size_t page_cnt)
   else
     NOT_REACHED ();
 
+  lock_acquire (&pool->lock);
+  if (pool == &user_pool) {
+    count_of_free_pages_user += page_cnt;
+  } else {
+    count_of_free_pages_kernel += page_cnt;
+  }
+  lock_release (&pool->lock);
+
   page_idx = pg_no (pages) - pg_no (pool->base);
 
 #ifndef NDEBUG
@@ -179,4 +195,11 @@ page_from_pool (const struct pool *pool, void *page)
   size_t end_page = start_page + bitmap_size (pool->used_map);
 
   return page_no >= start_page && page_no < end_page;
+}
+
+void
+how_many_free_pages_left (void)
+{
+  printf ("FOR DEBUGGING - kernel : %zu & user : %zu \n", count_of_free_pages_kernel,
+          count_of_free_pages_user);
 }

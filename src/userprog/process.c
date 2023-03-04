@@ -71,6 +71,8 @@ process_execute (const char *cmd_line)
   tid = thread_create (file_name, PRI_DEFAULT, start_process, pcb);
   if (tid == TID_ERROR)
     palloc_free_page (cmd_copy);
+  // for debug purpose
+  how_many_free_pages_left ();
 
   // wait for the child process to complete start_process
   sema_down (& (pcb->initialize_sema));
