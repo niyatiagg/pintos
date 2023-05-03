@@ -8,7 +8,7 @@ Important Terms :
 1. Project 1 : Alarm System : 
     I implemented alarm system in thread scheduling to avoid busy waiting (which is particularly helpful in systems with one cpu)
     
-     -> In a call to timer_sleep, a call to thread_sleep, with the no.of ‘ticks' it must sleep for, is made where the current thread’s sleep ticks are updated to ’ticks'. That thread is pushed to the back of the 'sleep' list and is blocked. Every time the timer interrupt handler runs, it updates the threads in the 'sleep' list and monitors if they have slept enough, and adds them to the ready list if they have.
+     -> In a call to timer_sleep, a call to thread_sleep, with the no.of ‘ticks' it must sleep for, is made where the current thread’s sleep ticks are updated to ’ticks'. That thread is pushed to the back of a 'sleep' list and is blocked. Every time the timer interrupt handler runs, it updates the threads in the 'sleep' list and monitors if they have slept enough, and adds them to the ready list if they have.
      
      -> Interrupts were turned off before the thread was blocked, curbing any attempts by another thread to be put to sleep simultaneously. It also prevents a race condition from timer interrupt.
      
@@ -26,5 +26,16 @@ Important Terms :
     -> For donation, a holder attribute to the lock and a donated_lock attribute to the thread was added which is the pointer to the thread that currently has the lock and vice-versa for the latter. The thread with higher priority can donate its priority to the 'holder' of the lock. Upon release of the lock, the priority is then reset to its old priority that is stored in the thread's old priority attribute.
     
     -> While implementing multiple donation and nested donation, donated_lock attribute was replaced by waiting_lock attribute(for which lock the thread is blocked).
+    
+3. Project 3: User Programs :
+    Definition :
+        
+        a) PHYS_BASE : Virtual memory in Pintos is divided into two regions: user virtual memory and kernel virtual memory. PHYS_BASE borders user virtual memory and kernel virtual memory.
+
+    -> Argument parsing : In order to support passing arguments to new processes, I first tokenized the arguments and then passed them through a function called argument parser which places all the arguments directly below PHYS_BASE in the appropriate order.
+    
+    -> System calls : First, the all arguments needed to be validated. The kernel often accesses memory through pointers provided by the user program. The user can pass a null pointer, a pointer to unmapped virtual memory, or a pointer to kernel virtual address space (above PHYS_BASE). All of these types of invalid pointers are rejected without harm to the kernel or other running processes, by terminating the offending process and freeing their resources.
+    
+    -> Added implementation for all the system calls
     
     
