@@ -38,7 +38,7 @@ Important Terms :
     
     -> Syscalls create, remove, open, close required manipulation of files and filesystem. So every thread has its own list of file descriptors to keep track of open files. Since file descriptors are unique within a single process, each process keeps a list of its file descriptors. A lock was added to avoid race conditions among threads while manipulating files.
     
-    -> For Syscall wait, I created a process control block(PCB) and maintained a list of child processes in every thread to keep track of child processes of each thread. If wait is called for a child process, the parent can access the child and check child's status and let the child know about parent's status.
+    -> For Syscall wait, I created a process control block(PCB) and maintained a list of child processes in every thread to keep track of child processes of each thread. If wait is called for a child process, the parent can access the child and check child's status and let the child know about parent's status
     
     
     
