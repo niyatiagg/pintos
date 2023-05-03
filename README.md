@@ -1,4 +1,4 @@
-PINTOS : It is an educational OS for the x86 architecture. Its a simple yet realistic enough approach on OS to get a grasp of concepts like multithreading, virtual memory and system calls.
+PINTOS : It is an educational OS for the x86 architecture. Its a simple yet realistic enough approach on OS to get a grasp of concepts like multithreading, virtual memory and system calls. 
 
 Important Terms : 
 
@@ -23,9 +23,9 @@ Important Terms :
 
     -> I implemented priority scheduling by ordering the ready list using a comparator (according to the thread's priority). Also, the current thread yields to a higher priority thread. 
     
-    -> For donation, a holder attribute to the lock and a donated_lock attribute to the thread was added which is the pointer to the thread that currently has the lock and vice-versa for the latter. The thread with higher priority can donate its priority to the 'holder' of the lock. Upon release of the lock, the priority is then reset to its old priority that is stored in the thread's old priority attribute.
+    -> For donation, I added a holder attribute to the lock and a donated_lock attribute to the thread which is the pointer to the thread that currently has the lock and vice-versa for the latter. The thread with higher priority can donate its priority to the 'holder' of the lock. Upon release of the lock, the priority is then reset to its old priority that is stored in the thread's old priority attribute.
     
-    -> While implementing multiple donation and nested donation, donated_lock attribute was replaced by waiting_lock attribute(for which lock the thread is blocked).
+    -> While implementing multiple donation and nested donation, donated_lock attribute was replaced by waiting_lock attribute(for which lock the thread is waiting) and a list of acquired locks was maintained for every thread to get access to the holder of the locks easily for donation.
     
 3. Project 3: User Programs :
     Definition :
@@ -36,6 +36,9 @@ Important Terms :
     
     -> System calls : First, the all arguments needed to be validated. The kernel often accesses memory through pointers provided by the user program. The user can pass a null pointer, a pointer to unmapped virtual memory, or a pointer to kernel virtual address space (above PHYS_BASE). All of these types of invalid pointers are rejected without harm to the kernel or other running processes, by terminating the offending process and freeing their resources.
     
-    -> Added implementation for all the system calls
+    -> Syscalls create, remove, open, close required manipulation of files and filesystem. So every thread has its own list of file descriptors to keep track of open files. Since file descriptors are unique within a single process, each process keeps a list of its file descriptors. A lock was added to avoid race conditions among threads while manipulating files.
+    
+    -> For Syscall wait, I created a process control block(PCB) and maintained a list of child processes in every thread to keep track of child processes of each thread. If wait is called for a child process, the parent can access the child and check child's status and let the child know about parent's status.
+    
     
     
