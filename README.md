@@ -1,10 +1,11 @@
 # PINTOS 
 It is an educational OS for the x86 architecture. Its a simple yet realistic enough approach on OS to get a grasp of concepts like multithreading, virtual memory and system calls. 
 
-## Important Terms : 
+## Important Terms :
 
-    a) States of a thread : In the lifecycle of a thread, there are various states it assumes, namely :  THREAD_READY - Not running but ready to run; THREAD_RUNNING - Currently running thread; THREAD_BLOCKED - Waiting for an event to trigger; THREAD_DYING - About to be destroyed.
-    b) Ready list : A list that stores elements of a thread(in ready state) that are scheduled to run but aren't running at present.
+a) `States of a thread :` In the lifecycle of a thread, there are various states it assumes, namely :  THREAD_READY - Not running but ready to run; THREAD_RUNNING - Currently running thread; THREAD_BLOCKED - Waiting for an event to trigger; THREAD_DYING - About to be destroyed.
+
+b) `Ready list :` A list that stores elements of a thread(in ready state) that are scheduled to run but aren't running at present.
 
 ## 1. Part 1 : Alarm System : 
 I implemented alarm system in thread scheduling to avoid busy waiting (which is particularly helpful in systems with one cpu)
@@ -16,11 +17,13 @@ I implemented alarm system in thread scheduling to avoid busy waiting (which is 
 * `Absolute time v/s relative time :` Changed the above implementation by replacing 'ticks'(relative time) in thread_sleep with total time(current time + ticks) i.e the time when thread wakes up. Insertion in sleep list is ordered according to their waking times. Earlier, with every tick we modified the entire sleep list. But now (at max) we just operate on the list for elements that need to be kicked off the list, else we stop. In practice, writing (to the 'sleep' list) is seldom in comparison to reading(iterate over the entire 'sleep' list) that happens at every tick. 
      
 ## 2. Part 2 : Priority Scheduling and donation : 
-    Definition :
-    
-        a) Priority : An integer value (range - PRI_MIN (0) to PRI_MAX (63)) assigned to each thread.
-        b) Priority Scheduling : arranging the threads according to their assigned priority.
-        c) Priority donation : if a higher priority thread needs a lock which has been acquired by a lower priority thread, the former 'donates' its priorty to the latter in order to free the lock and acquire it for itself. 
+Definition :
+
+a) `Priority :` An integer value (range - PRI_MIN (0) to PRI_MAX (63)) assigned to each thread.
+
+b) `Priority Scheduling :` arranging the threads according to their assigned priority.
+
+c) `Priority donation :` if a higher priority thread needs a lock which has been acquired by a lower priority thread, the former 'donates' its priorty to the latter in order to free the lock and acquire it for itself. 
 
 * I implemented priority scheduling by ordering the ready list using a comparator (according to the thread's priority). Also, the current thread yields to a higher priority thread. 
     
@@ -29,9 +32,9 @@ I implemented alarm system in thread scheduling to avoid busy waiting (which is 
 * While implementing multiple donation and nested donation, donated_lock attribute was replaced by waiting_lock attribute(for which lock the thread is waiting) and a list of acquired locks was maintained for every thread to get access to the holder of the locks easily for donation.
     
 ## 3. Part 3: User Programs :
-    Definition :
+Definition :
         
-        a) PHYS_BASE : Virtual memory in Pintos is divided into two regions: user virtual memory and kernel virtual memory. PHYS_BASE borders user virtual memory and kernel virtual memory.
+a) `PHYS_BASE :` Virtual memory in Pintos is divided into two regions: user virtual memory and kernel virtual memory. PHYS_BASE borders user virtual memory and kernel virtual memory.
 
 * `Argument parsing :` In order to support passing arguments to new processes, I first tokenized the arguments and then passed them through a function called argument parser which places all the arguments directly below PHYS_BASE in the appropriate order.
     
