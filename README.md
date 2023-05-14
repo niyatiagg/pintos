@@ -3,7 +3,12 @@ It is an educational OS for the x86 architecture. Its a simple yet realistic eno
 
 ## Important Terms :
 
-a) `States of a thread :` In the lifecycle of a thread, there are various states it assumes, namely :  THREAD_READY - Not running but ready to run; THREAD_RUNNING - Currently running thread; THREAD_BLOCKED - Waiting for an event to trigger; THREAD_DYING - About to be destroyed.
+a) `States of a thread :` In the lifecycle of a thread, there are various states it assumes, namely : 
+
+    THREAD_READY - Not running but ready to run; 
+    THREAD_RUNNING - Currently running thread; 
+    THREAD_BLOCKED - Waiting for an event to trigger; 
+    THREAD_DYING - About to be destroyed.
 
 b) `Ready list :` A list that stores elements of a thread(in ready state) that are scheduled to run.
 
